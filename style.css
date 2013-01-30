@@ -1,0 +1,47 @@
+#ListlyAdminYourList p
+{
+	clear: both;
+	overflow: hidden;
+}
+
+#ListlyAdminYourList p img.avatar
+{
+	float: left;
+	margin: 0 8px 0 0;
+	width: 31px;
+	border: 2px solid #A6A6A6;
+}
+
+.ListlyAdminListSearchWrap
+{
+	position: relative;
+}
+
+.ListlyAdminListSearchClear
+{
+	display: none;
+	position: absolute;
+	top: 3px;
+	right: 5px;
+}
+
+a.ListlyAdminListEmbed
+{
+	float: right;
+	margin: 0 0 0 8px;
+}
+
+.strong
+{
+	font-weight: bold;
+}
+
+.left
+{
+	float: left;
+}
+
+.right
+{
+	float: right;
+}
