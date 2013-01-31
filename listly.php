@@ -544,6 +544,11 @@ if (!class_exists('Listly'))
 			{
 				$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
+				$this->DebugConsole('Create Cache - API Parameters -> ', false, $ListId);
+				$this->DebugConsole(json_encode($PostParms), true);
+				$this->DebugConsole('Create Cache - API Response -> ', false, $ListId);
+				$this->DebugConsole(json_encode($Response), true);
+
 				if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 				{
 					set_transient("Listly-$ListId", $Response, 86400);
@@ -560,12 +565,20 @@ if (!class_exists('Listly'))
 				{
 					$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
+					$this->DebugConsole('Update Cache - API Parameters -> ', false, $ListId);
+					$this->DebugConsole(json_encode($PostParms), true);
+					$this->DebugConsole('Update Cache - API Response -> ', false, $ListId);
+					$this->DebugConsole(json_encode($Response), true);
+
 					if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 					{
 						delete_transient("Listly-$ListId");
 						set_transient("Listly-$ListId", $Response, 86400);
 					}
 				}
+
+				$this->DebugConsole('Cached Data -> ', false, $ListId);
+				$this->DebugConsole(json_encode($Response), true);
 
 				$ResponseJson = json_decode($Response['body'], true);
 
@@ -580,6 +593,22 @@ if (!class_exists('Listly'))
 				else
 				{
 					return $ResponseJson['message'];
+				}
+			}
+		}
+
+
+		function DebugConsole($Message = '', $Array = false, $ListId = '')
+		{
+			if (isset($_GET['listly_debug']) && $Message)
+			{
+				if ($Array)
+				{
+					print "<script type='text/javascript'> console.log($Message); </script>";
+				}
+				else
+				{
+					print "<script type='text/javascript'> console.log('Listly Id $ListId: $Message'); </script>";
 				}
 			}
 		}
