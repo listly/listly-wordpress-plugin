@@ -28,11 +28,7 @@ if (!class_exists('Listly'))
 
 			$this->SettingsDefaults = array(
 				'PublisherKey' => '',
-				'Theme' => 'light',
 				'Layout' => 'full',
-				'Numbered' => 'yes',
-				'Image' => 'yes',
-				'Items' => 'all',
 			);
 
 			$this->PostDefaults = array(
@@ -256,50 +252,12 @@ if (!class_exists('Listly'))
 					<table class="form-table listly-table">
 
 						<tr valign="top">
-							<th scope="row">Theme</th>
-							<td>
-								<select name="Theme">
-									<option value="light" <?php $this->CheckSelected($Settings['Theme'], 'light'); ?>>Light</option>
-									<option value="dark" <?php $this->CheckSelected($Settings['Theme'], 'dark'); ?>>Dark</option>
-								</select>
-							</td>
-						</tr>
-
-						<tr valign="top">
 							<th scope="row">Layout</th>
 							<td>
 								<select name="Layout">
 									<option value="full" <?php $this->CheckSelected($Settings['Layout'], 'full'); ?>>Full</option>
 									<option value="short" <?php $this->CheckSelected($Settings['Layout'], 'short'); ?>>Short</option>
 								</select>
-							</td>
-						</tr>
-
-						<tr valign="top">
-							<th scope="row">Numbered</th>
-							<td>
-								<select name="Numbered">
-									<option value="yes" <?php $this->CheckSelected($Settings['Numbered'], 'yes'); ?>>Yes</option>
-									<option value="no" <?php $this->CheckSelected($Settings['Numbered'], 'no'); ?>>No</option>
-								</select>
-							</td>
-						</tr>
-
-						<tr valign="top">
-							<th scope="row">Image</th>
-							<td>
-								<select name="Image">
-									<option value="yes" <?php $this->CheckSelected($Settings['Image'], 'yes'); ?>>Yes</option>
-									<option value="no" <?php $this->CheckSelected($Settings['Image'], 'no'); ?>>No</option>
-								</select>
-							</td>
-						</tr>
-
-						<tr valign="top">
-							<th scope="row">Items</th>
-							<td>
-								<input name="Items" type="text" value="<?php print $Settings['Items']; ?>" class="regular-text" />
-								<span class="description">"all" or any number greater than 0.</span>
 							</td>
 						</tr>
 
@@ -527,18 +485,14 @@ if (!class_exists('Listly'))
 		function ShortCode($Attributes, $Content = null, $Code = '')
 		{
 			$ListId = $Attributes['id'];
-			$Theme = (isset($Attributes['theme']) && $Attributes['theme']) ? $Attributes['theme'] : $this->Settings['Theme'];
 			$Layout = (isset($Attributes['layout']) && $Attributes['layout']) ? $Attributes['layout'] : $this->Settings['Layout'];
-			$Numbered = (isset($Attributes['numbered']) && $Attributes['numbered']) ? $Attributes['numbered'] : $this->Settings['Numbered'];
-			$Image = (isset($Attributes['image']) && $Attributes['image']) ? $Attributes['image'] : $this->Settings['Image'];
-			$Items = (isset($Attributes['items']) && $Attributes['items']) ? $Attributes['items'] : $this->Settings['Items'];
 
 			if (empty($ListId))
 			{
 				return 'Listly: Required parameter List ID is missing.';
 			}
 
-			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'theme' => $Theme, 'layout' => $Layout, 'numbered' => $Numbered, 'image' => $Image, 'items' => $Items, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT']))));
+			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT']))));
 
 			if (false === ($Response = get_transient("Listly-$ListId")))
 			{
