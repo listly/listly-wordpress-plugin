@@ -164,35 +164,54 @@ if (!class_exists('Listly'))
 				wp_die(__('You do not have sufficient permissions to access this page.'));
 			}
 
-			if (isset($_POST['action']) && $_POST['action'] == 'ListlySaveSettings')
+			if (isset($_POST['action']) && !wp_verify_nonce($_POST['nonce'], $this->SettingsName))
 			{
-				if (wp_verify_nonce($_POST['nonce'], $this->SettingsName))
+				wp_die(__('Security check failed! Settings not saved.'));
+			}
+
+			global $wpdb;
+
+			if (isset($_POST['action']) && $_POST['action'] == 'Save Settings')
+			{
+				foreach ($_POST as $Key => $Value)
 				{
-					foreach ($_POST as $Key => $Value)
+					if (array_key_exists($Key, $this->SettingsDefaults))
 					{
-						if (array_key_exists($Key, $this->SettingsDefaults))
+						if (is_array($Value))
 						{
-							if (is_array($Value))
-							{
-								array_walk_recursive($Value, array(&$this, 'TrimByReference'));
-							}
-							else
-							{
-								$Value = trim($Value);
-							}
-
-							$Settings[$Key] = $Value;
+							array_walk_recursive($Value, array(&$this, 'TrimByReference'));
 						}
+						else
+						{
+							$Value = trim($Value);
+						}
+
+						$Settings[$Key] = $Value;
+					}
+				}
+
+				if (update_option($this->SettingsName, $Settings))
+				{
+					print '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+				}
+			}
+
+			if (isset($_POST['action']) && $_POST['action'] == 'Clear Cache')
+			{
+				$Transients = $wpdb->get_col("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE '_transient_Listly-%'");
+
+				if ($Transients)
+				{
+					foreach ($Transients as $Transient)
+					{
+						delete_transient(str_ireplace('_transient_', '', $Transient));
 					}
 
-					if (update_option($this->SettingsName, $Settings))
-					{
-						print '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
-					}
+					print '<div class="updated"><p><strong>All cached data deleted.</strong></p></div>';
 				}
 				else
 				{
-					print '<div class="error"><p><strong>Security check failed! Settings not saved.</strong></p></div>';
+					print '<div class="error"><p><strong>No cached data found.</strong></p></div>';
 				}
 			}
 
@@ -215,6 +234,8 @@ if (!class_exists('Listly'))
 
 				<form method="post" action="">
 
+					<h3>Common Settings</h3>
+
 					<table class="form-table listly-table">
 
 						<tr valign="top">
@@ -227,6 +248,12 @@ if (!class_exists('Listly'))
 								<a id="ListlyAdminAuthStatus" href="#">Check Key Status</a> : <span></span>
 							</td>
 						</tr>
+
+					</table>
+
+					<h3>Default ShortCode Settings</h3>
+
+					<table class="form-table listly-table">
 
 						<tr valign="top">
 							<th scope="row">Theme</th>
@@ -278,10 +305,22 @@ if (!class_exists('Listly'))
 
 					</table>
 
-					<input name="nonce" type="hidden" value="<?php print wp_create_nonce($this->SettingsName); ?>" />
-					<input name="action" type="hidden" value="ListlySaveSettings" />
+					<h3>Cache Settings</h3>
 
-					<div class="submit"><input name="" type="submit" value="Save Settings" class="button-primary" /></div>
+					<table class="form-table listly-table">
+
+						<tr valign="top">
+							<th scope="row">Clear Cache</th>
+							<td>
+								<input name="action" type="submit" value="Clear Cache" class="button-secondary" />
+							</td>
+						</tr>
+
+					</table>
+
+					<input name="nonce" type="hidden" value="<?php print wp_create_nonce($this->SettingsName); ?>" />
+
+					<div class="submit"><input name="action" type="submit" value="Save Settings" class="button-primary" /></div>
 
 				</form>
 
