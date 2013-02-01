@@ -374,7 +374,7 @@ if (!class_exists('Listly'))
 							$Results[] = '
 							<p>
 								<img class="avatar" src="'.$Result['user_image'].'" alt="" />
-								<a class="ListlyAdminListEmbed" target="_blank" href="http://list.ly/preview/'.$Result['list_id'].'?key='.$this->Settings['PublisherKey'].'&source=wp_plugin" title="Get Short Code"><img src="'.$this->PluginURL.'images/shortcode.png" alt="" /></a>
+								<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/'.$Result['list_id'].'?key='.$this->Settings['PublisherKey'].'&source=wp_plugin" title="Get Short Code"><img src="'.$this->PluginURL.'images/shortcode.png" alt="" /></a>
 								<a class="strong" target="_blank" href="http://list.ly/'.$Result['list_id'].'?source=wp_plugin" title="Go to List on List.ly">'.$Result['title'].'</a>
 							</p>';
 						}
@@ -463,7 +463,7 @@ if (!class_exists('Listly'))
 							<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
 								<p>
 									<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
-									<a class="ListlyAdminListEmbed" target="_blank" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
+									<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
 									<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
 								</p>
 							<?php endforeach; ?>
