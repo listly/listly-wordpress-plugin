@@ -546,7 +546,8 @@ if (!class_exists('Listly'))
 				}
 				else
 				{
-					return $ResponseJson['message'];
+					$this->DebugConsole('API Error -> '.$ResponseJson['message'], false, $ListId);
+					return "<!-- Listly error! --><p><a href=\"http://list.ly/$ListId\">View List on List.ly</a></p>";
 				}
 			}
 		}
