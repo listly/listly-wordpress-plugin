@@ -20,6 +20,7 @@ jQuery(document).ready(function($)
 	{
 		var ElmValue = $(this).val();
 		var Container = $('#ListlyAdminYourList');
+		var SearchAll = $('input[name="ListlyAdminListSearchAll"]').is(':checked') ? 'all' : 'publisher';
 
 		if (ElmValue.length)
 		{
@@ -34,31 +35,42 @@ jQuery(document).ready(function($)
 		{
 			Container.html('<p>Loading...</p>');
 
-			$.post(ajaxurl, {'action': 'AJAXListSearch', 'nounce': Listly.Nounce, 'Term': ElmValue, 'SearchAll': $('input[name="ListlyAdminListSearchAll"]').is(':checked')}, function(data)
-			{
-				if (data.status == 'ok')
+			$.ajax
+			({
+				type: 'POST',
+				url: Listly.SiteURL + 'autocomplete/list.json',
+				data: {'term': ElmValue, 'key': Listly.Key, 'type': SearchAll},
+				jsonp: 'callback',
+				jsonpCallback: 'jsonCallback',
+				contentType: 'application/json',
+				dataType: 'jsonp',
+				success: function(data)
 				{
-					Container.empty();
-
-					if (jQuery.isEmptyObject(data.results))
+					if (data.status == 'ok')
 					{
-						Container.append('<p>No results found!</p>');
+						Container.empty();
+
+						if (jQuery.isEmptyObject(data.results))
+						{
+							Container.append('<p>No results found!</p>');
+						}
+						else
+						{
+							$(data.results).each(function(i)
+							{
+								Container.append('<p> <img class="avatar" src="'+data.results[i].user_image+'" alt="" /> <a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/'+data.results[i].list_id+'?key='+Listly.Key+'&source=wp_plugin" title="Get Short Code"><img src="'+Listly.PluginURL+'images/shortcode.png" alt="" /></a> <a class="strong" target="_blank" href="http://list.ly/'+data.results[i].list_id+'?source=wp_plugin" title="Go to List on List.ly">'+data.results[i].title+'</a> </p>');
+							});
+						}
 					}
 					else
 					{
-						$(data.results).each(function(i)
-						{
-							Container.append(data.results[i]);
-						});
+						Container.html(data.message);
 					}
-				}
-				else
+				},
+				error: function(jqXHR, textStatus, errorThrown)
 				{
-					Container.html(data.message);
+					Container.html('<p>Error: '+errorThrown+'</p>');
 				}
-			}, 'json').error(function(jqXHR, textStatus)
-			{
-				Container.html('<p>Error: '+textStatus+'</p>');
 			});
 		}
 	});

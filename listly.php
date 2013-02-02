@@ -51,7 +51,7 @@ if (!class_exists('Listly'))
 			add_action('admin_menu', array(&$this, 'AdminMenu'));
 			add_action('wp_head', array(&$this, 'WPHead'));
 			add_action('wp_ajax_AJAXPublisherAuth', array(&$this, 'AJAXPublisherAuth'));
-			add_action('wp_ajax_AJAXListSearch', array(&$this, 'AJAXListSearch'));
+			//add_action('wp_ajax_AJAXListSearch', array(&$this, 'AJAXListSearch'));
 			add_shortcode('listly', array(&$this, 'ShortCode'));
 
 			if ($this->Settings['PublisherKey'] == '')
@@ -130,7 +130,7 @@ if (!class_exists('Listly'))
 		{
 			wp_enqueue_script('jquery');
 			wp_enqueue_script('listly-script', $this->PluginURL.'script.js', false, $this->Version, false);
-			wp_localize_script('listly-script', 'Listly', array('Nounce' => wp_create_nonce('ListlyNounce')));
+			wp_localize_script('listly-script', 'Listly', array('PluginURL' => $this->PluginURL, 'SiteURL' => $this->SiteURL, 'Key' => $this->Settings['PublisherKey'], 'Nounce' => wp_create_nonce('ListlyNounce')));
 		}
 
 		function AdminPrintStyles()
@@ -333,7 +333,7 @@ if (!class_exists('Listly'))
 			exit;
 		}
 
-
+/*
 		function AJAXListSearch()
 		{
 			define('DONOTCACHEPAGE', true);
@@ -392,7 +392,7 @@ if (!class_exists('Listly'))
 
 			exit;
 		}
-
+*/
 
 		function MetaBox()
 		{
