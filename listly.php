@@ -257,6 +257,7 @@ if (!class_exists('Listly'))
 								<select name="Layout">
 									<option value="full" <?php $this->CheckSelected($Settings['Layout'], 'full'); ?>>Full</option>
 									<option value="short" <?php $this->CheckSelected($Settings['Layout'], 'short'); ?>>Short</option>
+									<option value="gallery" <?php $this->CheckSelected($Settings['Layout'], 'short'); ?>>Gallery</option>
 								</select>
 							</td>
 						</tr>
