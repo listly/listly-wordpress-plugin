@@ -460,13 +460,13 @@ if (!class_exists('Listly'))
 
 					?>
 
-							<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
-								<p>
-									<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
-									<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
-									<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
-								</p>
-							<?php endforeach; ?>
+						<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
+							<p>
+								<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
+								<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
+								<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
+							</p>
+						<?php endforeach; ?>
 
 					<?php
 
@@ -494,7 +494,7 @@ if (!class_exists('Listly'))
 
 			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT']))));
 
-			if (false === ($Response = get_transient("Listly-$ListId")))
+			if (false === ($Response = get_transient("Listly-$ListId-$Layout")))
 			{
 				$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
@@ -505,7 +505,7 @@ if (!class_exists('Listly'))
 
 				if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 				{
-					set_transient("Listly-$ListId", $Response, 86400);
+					set_transient("Listly-$ListId-$Layout", $Response, 86400);
 				}
 			}
 
@@ -515,7 +515,7 @@ if (!class_exists('Listly'))
 			}
 			else
 			{
-				if (false !== ($Timeout = get_option("_transient_timeout_Listly-$ListId")) && $Timeout < time() + 82800)
+				if (false !== ($Timeout = get_option("_transient_timeout_Listly-$ListId-$Layout")) && $Timeout < time() + 82800)
 				{
 					$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
@@ -526,8 +526,8 @@ if (!class_exists('Listly'))
 
 					if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 					{
-						delete_transient("Listly-$ListId");
-						set_transient("Listly-$ListId", $Response, 86400);
+						delete_transient("Listly-$ListId-$Layout");
+						set_transient("Listly-$ListId-$Layout", $Response, 86400);
 					}
 				}
 
@@ -563,7 +563,7 @@ if (!class_exists('Listly'))
 				}
 				else
 				{
-					print "<script type='text/javascript'> console.log('Listly Id $ListId: $Message'); </script>";
+					print "<script type='text/javascript'> console.log('Listly $ListId: $Message'); </script>";
 				}
 			}
 		}
