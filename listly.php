@@ -428,17 +428,17 @@ if (!class_exists('Listly'))
 
 			?>
 
-				<h2 style="margin: 0; padding: 0; text-align: right;"><a target="_blank" href="<?php print $UserURL; ?>">Make New List</a></h2>
+				<div style="text-align: right;"><a class="button" target="_blank" href="<?php print $UserURL; ?>">Make New List</a></div>
 
 				<p>
 					<div class="ListlyAdminListSearchWrap">
 						<input type="text" name="ListlyAdminListSearch" placeholder="Start typing to search..." autocomplete="off" style="width: 100%; margin: 0 0 5px;" />
 						<a class="ListlyAdminListSearchClear" href="#">X</a>
 					</div>
-					<input type="checkbox" name="ListlyAdminListSearchAll" value="1" /> <small>Search All Listly</small>
+					<label><input type="radio" name="ListlyAdminListSearchType" value="publisher" checked="checked" /> <small>Just My List</small></label> &nbsp; <label><input type="radio" name="ListlyAdminListSearchType" value="all" /> <small>Search All Lists</small></label>
 				</p>
 
-				<div id="ListlyAdminYourList" style="min-height: 250px;">
+				<div id="ListlyAdminYourList">
 
 			<?php
 

@@ -20,7 +20,7 @@ jQuery(document).ready(function($)
 	{
 		var ElmValue = $(this).val();
 		var Container = $('#ListlyAdminYourList');
-		var SearchAll = $('input[name="ListlyAdminListSearchAll"]').is(':checked') ? 'all' : 'publisher';
+		var SearchType = $('input[name="ListlyAdminListSearchType"]:checked').val();
 
 		if (ElmValue.length)
 		{
@@ -39,7 +39,7 @@ jQuery(document).ready(function($)
 			({
 				type: 'POST',
 				url: Listly.SiteURL + 'autocomplete/list.json',
-				data: {'term': ElmValue, 'key': Listly.Key, 'type': SearchAll},
+				data: {'term': ElmValue, 'key': Listly.Key, 'type': SearchType},
 				jsonp: 'callback',
 				jsonpCallback: 'jsonCallback',
 				contentType: 'application/json',
