@@ -436,7 +436,7 @@ if (!class_exists('Listly'))
 						<input type="text" name="ListlyAdminListSearch" placeholder="Start typing to search..." autocomplete="off" style="width: 100%; margin: 0 0 5px;" />
 						<a class="ListlyAdminListSearchClear" href="#">X</a>
 					</div>
-					<label><input type="radio" name="ListlyAdminListSearchType" value="publisher" checked="checked" /> <small>Just My List</small></label> &nbsp; <label><input type="radio" name="ListlyAdminListSearchType" value="all" /> <small>Search All Lists</small></label>
+					<label><input type="radio" name="ListlyAdminListSearchType" value="publisher" checked="checked" /> <small>Just My Lists</small></label> &nbsp; <label><input type="radio" name="ListlyAdminListSearchType" value="all" /> <small>Search All Lists</small></label>
 				</p>
 
 				<div id="ListlyAdminYourList">
