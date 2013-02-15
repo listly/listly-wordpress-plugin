@@ -423,7 +423,7 @@ if (!class_exists('Listly'))
 
 					if ($ResponseJson['status'] == 'ok')
 					{
-						$UserURL = $ResponseJson['user_url'].'?action=makelist';
+						$UserURL = $ResponseJson['user_url'].'?trigger=newlist';
 					}
 				}
 
