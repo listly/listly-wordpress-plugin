@@ -104,7 +104,7 @@ jQuery(document).ready(function($)
 			dataType: 'jsonp',
 			success: function(data)
 			{
-				if (data != '')
+				if (data == '')
 				{
 					Container.html('<p>Connection error. Retrying in 1 minute...<a id="ListlyAdminYourListReload" href="#">try now</a></p>');
 
