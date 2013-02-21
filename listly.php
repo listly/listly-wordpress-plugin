@@ -441,44 +441,49 @@ if (!class_exists('Listly'))
 
 				<div id="ListlyAdminYourList">
 
-			<?php
+				<?php
+/*
+					$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('key' => $this->Settings['PublisherKey']))));
+					$Response = wp_remote_post($this->SiteURL.'publisher/lists', $PostParms);
 
-				$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('key' => $this->Settings['PublisherKey']))));
-				$Response = wp_remote_post($this->SiteURL.'publisher/lists', $PostParms);
-
-				if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
-				{
-					print '<p class="error">No connectivity or Listly service not available. Try later.</p>';
-				}
-				else
-				{
-					$ResponseJson = json_decode($Response['body'], true);
-
-					if ($ResponseJson['status'] == 'ok')
+					if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
 					{
-						$Count = 0;
-						$Lists = $ResponseJson['lists'];
-
-					?>
-
-						<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
-							<p>
-								<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
-								<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
-								<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
-							</p>
-						<?php endforeach; ?>
-
-					<?php
-
+						print '<p class="error">No connectivity or Listly service not available. Try later.</p>';
 					}
 					else
 					{
-						print "<div class='ui-state ui-state-error ui-corner-all'><p>{$ResponseJson['message']}</p></div>";
-					}
-				}
+						$ResponseJson = json_decode($Response['body'], true);
 
-				print '</div>';
+						if ($ResponseJson['status'] == 'ok')
+						{
+							$Count = 0;
+							$Lists = $ResponseJson['lists'];
+
+						?>
+
+							<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
+								<p>
+									<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
+									<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
+									<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
+								</p>
+							<?php endforeach; ?>
+
+						<?php
+
+						}
+						else
+						{
+							print "<div class='ui-state ui-state-error ui-corner-all'><p>{$ResponseJson['message']}</p></div>";
+						}
+					}
+*/
+				?>
+
+				</div>
+
+			<?php
+
 			}
 		}
 

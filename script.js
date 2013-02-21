@@ -84,4 +84,80 @@ jQuery(document).ready(function($)
 		$('input[name="ListlyAdminListSearch"]').val('').focus();
 	});
 
+
+	function ListlyAdminYourList()
+	{
+		window.clearTimeout(ListlyAdminYourListTimer)
+
+		var Container = $('#ListlyAdminYourList');
+
+		Container.html('<p>Loading...</p>');
+
+		$.ajax
+		({
+			type: 'POST',
+			url: Listly.SiteURL + 'publisher/lists',
+			data: {'key': Listly.Key},
+			jsonp: 'callback',
+			jsonpCallback: 'jsonCallback',
+			contentType: 'application/json',
+			dataType: 'jsonp',
+			success: function(data)
+			{
+				if (data != '')
+				{
+					Container.html('<p>Connection error. Retrying in 1 minute...<a id="ListlyAdminYourListReload" href="#">try now</a></p>');
+
+					var ListlyAdminYourListTimer = window.setTimeout(ListlyAdminYourList, 60000);
+				}
+				else if (data.status == 'ok')
+				{
+					Container.empty();
+
+					if (jQuery.isEmptyObject(data.lists))
+					{
+						Container.append('<p>No lists found!</p>');
+					}
+					else
+					{
+						$(data.lists).each(function(i)
+						{
+							Container.append('<p> <img class="avatar" src="'+data.lists[i].user_image+'" alt="" /> <a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/'+data.lists[i].list_id+'?key='+Listly.Key+'&source=wp_plugin" title="Get Short Code"><img src="'+Listly.PluginURL+'images/shortcode.png" alt="" /></a> <a class="strong" target="_blank" href="http://list.ly/'+data.lists[i].list_id+'?source=wp_plugin" title="Go to List on List.ly">'+data.lists[i].title+'</a> </p>');
+						});
+					}
+				}
+				else if (data.message != '')
+				{
+					Container.html(data.message);
+				}
+				else
+				{
+					Container.html('<p>Connection error. Retrying in 1 minute...<a id="ListlyAdminYourListReload" href="#">try now</a></p>');
+
+					var ListlyAdminYourListTimer = window.setTimeout(ListlyAdminYourList, 60000);
+				}
+			},
+			error: function(jqXHR, textStatus, errorThrown)
+			{
+				Container.html('<p>Connection error. Retrying in 1 minute...<a id="ListlyAdminYourListReload" href="#">try now</a></p>');
+
+				var ListlyAdminYourListTimer = window.setTimeout(ListlyAdminYourList, 60000);
+			}
+		});
+	}
+
+	if ($('#ListlyAdminYourList').length)
+	{
+		var ListlyAdminYourListTimer;
+
+		ListlyAdminYourList();
+
+		$('#ListlyAdminYourList').on('click', '#ListlyAdminYourListReload', function(e)
+		{
+			e.preventDefault();
+
+			ListlyAdminYourList();
+		});
+	}
+
 });
