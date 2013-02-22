@@ -44,15 +44,16 @@ if (!class_exists('Listly'))
 			);
 
 
-			register_activation_hook($this->PluginFile, array(&$this, 'Activate'));
+			register_activation_hook($this->PluginFile, array($this, 'Activate'));
 
-			add_filter('plugin_action_links', array(&$this, 'ActionLinks'), 10, 2);
-			add_filter('contextual_help', array(&$this, 'ContextualHelp'), 10, 3);
-			add_action('admin_menu', array(&$this, 'AdminMenu'));
-			add_action('wp_head', array(&$this, 'WPHead'));
-			add_action('wp_ajax_AJAXPublisherAuth', array(&$this, 'AJAXPublisherAuth'));
-			//add_action('wp_ajax_AJAXListSearch', array(&$this, 'AJAXListSearch'));
-			add_shortcode('listly', array(&$this, 'ShortCode'));
+			add_filter('plugin_action_links', array($this, 'ActionLinks'), 10, 2);
+			add_action('init', array($this, 'Init'));
+			add_action('admin_menu', array($this, 'AdminMenu'));
+			add_filter('contextual_help', array($this, 'ContextualHelp'), 10, 3);
+			add_action('wp_head', array($this, 'WPHead'));
+			add_action('wp_ajax_AJAXPublisherAuth', array($this, 'AJAXPublisherAuth'));
+			//add_action('wp_ajax_AJAXListSearch', array($this, 'AJAXListSearch'));
+			add_shortcode('listly', array($this, 'ShortCode'));
 
 			if ($this->Settings['PublisherKey'] == '')
 			{
@@ -97,16 +98,28 @@ if (!class_exists('Listly'))
 		}
 
 
-		function ContextualHelp($Help, $ScreenId, $Screen)
+		function Init()
 		{
-			global $ListlyPageSettings;
-
-			if ($ScreenId == $ListlyPageSettings)
+			if (isset($_GET['listly_clearcache']))
 			{
-				$Help = '<p><a href="mailto:support@list.ly">Contact Support</a></p> <p><a target="_blank" href="http://list.ly/publishers/landing">Request Publisher Key</a></p>';
-			}
+				global $wpdb;
 
-			return $Help;
+				$Transients = $wpdb->get_col("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE '_transient_Listly-%'");
+
+				if ($Transients)
+				{
+					foreach ($Transients as $Transient)
+					{
+						delete_transient(str_ireplace('_transient_', '', $Transient));
+					}
+
+					print '<!-- Listly: All cached data deleted. -->';
+				}
+				else
+				{
+					print '<!-- Listly: No cached data found. -->';
+				}
+			}
 		}
 
 
@@ -143,13 +156,13 @@ if (!class_exists('Listly'))
 		{
 			global $ListlyPageSettings;
 
-			$ListlyPageSettings = add_submenu_page('options-general.php', 'Listly &rsaquo; Settings', 'Listly', 'manage_options', $this->PluginFile, array(&$this, 'Admin'));
+			$ListlyPageSettings = add_submenu_page('options-general.php', 'Listly &rsaquo; Settings', 'Listly', 'manage_options', $this->PluginFile, array($this, 'Admin'));
 
-			add_action("admin_print_scripts", array(&$this, 'AdminPrintScripts'));
-			add_action("admin_print_styles", array(&$this, 'AdminPrintStyles'));
+			add_action("admin_print_scripts", array($this, 'AdminPrintScripts'));
+			add_action("admin_print_styles", array($this, 'AdminPrintStyles'));
 
-			add_meta_box('ListlyMetaBox', 'Listly', array(&$this, 'MetaBox'), 'page', 'side', 'default');
-			add_meta_box('ListlyMetaBox', 'Listly', array(&$this, 'MetaBox'), 'post', 'side', 'core');
+			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'page', 'side', 'default');
+			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'post', 'side', 'core');
 		}
 
 
@@ -175,7 +188,7 @@ if (!class_exists('Listly'))
 					{
 						if (is_array($Value))
 						{
-							array_walk_recursive($Value, array(&$this, 'TrimByReference'));
+							array_walk_recursive($Value, array($this, 'TrimByReference'));
 						}
 						else
 						{
@@ -287,6 +300,19 @@ if (!class_exists('Listly'))
 
 		<?php
 
+		}
+
+
+		function ContextualHelp($Help, $ScreenId, $Screen)
+		{
+			global $ListlyPageSettings;
+
+			if ($ScreenId == $ListlyPageSettings)
+			{
+				$Help = '<p><a href="mailto:support@list.ly">Contact Support</a></p> <p><a target="_blank" href="http://list.ly/publishers/landing">Request Publisher Key</a></p>';
+			}
+
+			return $Help;
 		}
 
 
@@ -546,7 +572,7 @@ if (!class_exists('Listly'))
 				{
 					global $ListlyListStyle;
 					$ListlyListStyle = $ResponseJson['styles'][0];
-					add_action('wp_footer', array(&$this, 'WPFooter'), 100);
+					add_action('wp_footer', array($this, 'WPFooter'), 100);
 
 					return $ResponseJson['list-dom'];
 				}
