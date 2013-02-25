@@ -85,6 +85,12 @@ jQuery(document).ready(function($)
 	});
 
 
+	$('input[name="ListlyAdminListSearchType"]').click(function(e)
+	{
+		$('input[name="ListlyAdminListSearch"]').trigger('keyup');
+	});
+
+
 	function ListlyAdminYourList()
 	{
 		window.clearTimeout(ListlyAdminYourListTimer)
