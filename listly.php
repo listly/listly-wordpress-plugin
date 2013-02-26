@@ -46,7 +46,7 @@ if (!class_exists('Listly'))
 
 			register_activation_hook($this->PluginFile, array($this, 'Activate'));
 
-			add_filter('plugin_action_links', array($this, 'ActionLinks'), 10, 2);
+			add_filter('plugin_action_links_'.plugin_basename($this->PluginFile), array($this, 'ActionLinks'));
 			add_action('init', array($this, 'Init'));
 			add_action('admin_menu', array($this, 'AdminMenu'));
 			add_filter('contextual_help', array($this, 'ContextualHelp'), 10, 3);
@@ -78,21 +78,11 @@ if (!class_exists('Listly'))
 		}
 
 
-		function ActionLinks($Links, $File)
+		function ActionLinks($Links)
 		{
-			static $FilePlugin;
+			$Link = "<a href='$this->SettingsURL'>Settings</a>";
 
-			if (!$FilePlugin)
-			{
-				$FilePlugin = plugin_basename($this->PluginFile);
-			}
-	
-			if ($File == $FilePlugin)
-			{
-				$Link = "<a href='$this->SettingsURL'>Settings</a>";
-
-				array_push($Links, $Link);
-			}
+			array_push($Links, $Link);
 
 			return $Links;
 		}
@@ -100,11 +90,13 @@ if (!class_exists('Listly'))
 
 		function Init()
 		{
-			if (isset($_GET['listly_clearcache']))
+			if (isset($_GET['ListlyDeleteCache']))
 			{
 				global $wpdb;
 
-				$Transients = $wpdb->get_col("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE '_transient_Listly-%'");
+				$ListId = ($_GET['ListlyDeleteCache'] != '') ? $_GET['ListlyDeleteCache'].'-' : '';
+
+				$Transients = $wpdb->get_col( $wpdb->prepare("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE %s", array("_transient_Listly-$ListId%")) );
 
 				if ($Transients)
 				{
@@ -113,7 +105,7 @@ if (!class_exists('Listly'))
 						delete_transient(str_ireplace('_transient_', '', $Transient));
 					}
 
-					print '<!-- Listly: All cached data deleted. -->';
+					print '<!-- Listly: Cached data deleted. -->';
 				}
 				else
 				{
@@ -131,7 +123,7 @@ if (!class_exists('Listly'))
 		}
 
 
-		function WPFooter()
+		function WPFooterShortCode()
 		{
 			global $ListlyListStyle;
 
@@ -205,7 +197,7 @@ if (!class_exists('Listly'))
 				}
 			}
 
-			if (isset($_POST['action']) && $_POST['action'] == 'Clear Cache')
+			if (isset($_POST['action']) && $_POST['action'] == 'Delete Cache')
 			{
 				$Transients = $wpdb->get_col("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE '_transient_Listly-%'");
 
@@ -282,9 +274,9 @@ if (!class_exists('Listly'))
 					<table class="form-table listly-table">
 
 						<tr valign="top">
-							<th scope="row">Clear Cache</th>
+							<th scope="row">Delete Cache</th>
 							<td>
-								<input name="action" type="submit" value="Clear Cache" class="button-secondary" />
+								<input name="action" type="submit" value="Delete Cache" class="button-secondary" />
 							</td>
 						</tr>
 
@@ -524,7 +516,7 @@ if (!class_exists('Listly'))
 				return 'Listly: Required parameter List ID is missing.';
 			}
 
-			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT']))));
+			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ))));
 
 			if (false === ($Response = get_transient("Listly-$ListId-$Layout")))
 			{
@@ -572,7 +564,7 @@ if (!class_exists('Listly'))
 				{
 					global $ListlyListStyle;
 					$ListlyListStyle = $ResponseJson['styles'][0];
-					add_action('wp_footer', array($this, 'WPFooter'), 100);
+					add_action('wp_footer', array($this, 'WPFooterShortCode'), 100);
 
 					return $ResponseJson['list-dom'];
 				}
