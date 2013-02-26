@@ -9,7 +9,7 @@ jQuery(document).ready(function($)
 
 		ElmMsg.html('Loading...');
 
-		$.post(ajaxurl, {'action': 'AJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': Key}, function(data)
+		$.post(ajaxurl, {'action': 'ListlyAJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': Key}, function(data)
 		{
 			ElmMsg.html(data);
 		});

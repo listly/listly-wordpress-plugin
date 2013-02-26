@@ -51,8 +51,7 @@ if (!class_exists('Listly'))
 			add_action('admin_menu', array($this, 'AdminMenu'));
 			add_filter('contextual_help', array($this, 'ContextualHelp'), 10, 3);
 			add_action('wp_head', array($this, 'WPHead'));
-			add_action('wp_ajax_AJAXPublisherAuth', array($this, 'AJAXPublisherAuth'));
-			//add_action('wp_ajax_AJAXListSearch', array($this, 'AJAXListSearch'));
+			add_action('wp_ajax_ListlyAJAXPublisherAuth', array($this, 'ListlyAJAXPublisherAuth'));
 			add_shortcode('listly', array($this, 'ShortCode'));
 
 			if ($this->Settings['PublisherKey'] == '')
@@ -118,8 +117,6 @@ if (!class_exists('Listly'))
 		function WPHead()
 		{
 			wp_enqueue_script('jquery');
-			//wp_enqueue_script($this->SettingsName, $this->PluginURL.'scripts.js', array('jquery'), '1.0', false);
-			//wp_enqueue_style($this->SettingsName, $this->PluginURL.'style.css', false, '1.0', 'screen');
 		}
 
 
@@ -308,7 +305,7 @@ if (!class_exists('Listly'))
 		}
 
 
-		function AJAXPublisherAuth()
+		function ListlyAJAXPublisherAuth()
 		{
 			define('DONOTCACHEPAGE', true);
 
@@ -352,66 +349,6 @@ if (!class_exists('Listly'))
 			exit;
 		}
 
-/*
-		function AJAXListSearch()
-		{
-			define('DONOTCACHEPAGE', true);
-
-			if (!wp_verify_nonce($_POST['nounce'], 'ListlyNounce'))
-			{
-				print "<div class='ui-state ui-state-error ui-corner-all'><p>Authorisation failed!</p></div>";
-				exit;
-			}
-
-			if (isset($_POST['Term']))
-			{
-				if ($_POST['SearchAll'] == 'true')
-				{
-					$PostParms = array_merge($this->PostDefaults, array('timeout' => 2, 'body' => json_encode(array('term' => $_POST['Term'], 'key' => $this->Settings['PublisherKey']))));
-				}
-				else
-				{
-					$PostParms = array_merge($this->PostDefaults, array('timeout' => 2, 'body' => json_encode(array('term' => $_POST['Term'], 'type' => 'publisher', 'key' => $this->Settings['PublisherKey']))));
-				}
-
-				$Response = wp_remote_post($this->SiteURL.'autocomplete/list.json', $PostParms);
-
-				if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
-				{
-					print json_encode(array('message' => '<p class="error">No connectivity or Listly service not available. Try later.</p>'));
-				}
-				else
-				{
-					$ResponseJson = json_decode($Response['body'], true);
-
-					if ($ResponseJson['results'] && count($ResponseJson['results']))
-					{
-						$Results = array();
-
-						foreach ($ResponseJson['results'] as $Result)
-						{
-							$Results[] = '
-							<p>
-								<img class="avatar" src="'.$Result['user_image'].'" alt="" />
-								<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/'.$Result['list_id'].'?key='.$this->Settings['PublisherKey'].'&source=wp_plugin" title="Get Short Code"><img src="'.$this->PluginURL.'images/shortcode.png" alt="" /></a>
-								<a class="strong" target="_blank" href="http://list.ly/'.$Result['list_id'].'?source=wp_plugin" title="Go to List on List.ly">'.$Result['title'].'</a>
-							</p>';
-						}
-
-						$ResponseJson['results'] = $Results;
-
-						print json_encode($ResponseJson);
-					}
-					else
-					{
-						print $Response['body'];
-					}
-				}
-			}
-
-			exit;
-		}
-*/
 
 		function MetaBox()
 		{
@@ -457,48 +394,7 @@ if (!class_exists('Listly'))
 					<label><input type="radio" name="ListlyAdminListSearchType" value="publisher" checked="checked" /> <small>Just My Lists</small></label> &nbsp; <label><input type="radio" name="ListlyAdminListSearchType" value="all" /> <small>Search All Lists</small></label>
 				</p>
 
-				<div id="ListlyAdminYourList">
-
-				<?php
-/*
-					$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('key' => $this->Settings['PublisherKey']))));
-					$Response = wp_remote_post($this->SiteURL.'publisher/lists', $PostParms);
-
-					if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
-					{
-						print '<p class="error">No connectivity or Listly service not available. Try later.</p>';
-					}
-					else
-					{
-						$ResponseJson = json_decode($Response['body'], true);
-
-						if ($ResponseJson['status'] == 'ok')
-						{
-							$Count = 0;
-							$Lists = $ResponseJson['lists'];
-
-						?>
-
-							<?php foreach ($Lists as $Key => $List) : $Count++; if ($Count > 10) { break; } ?>
-								<p>
-									<img class="avatar" src="<?php print $List['user_image']; ?>" alt="" />
-									<a class="ListlyAdminListEmbed" target="_new" href="http://list.ly/preview/<?php print $List['list_id']; ?>?key=<?php print $this->Settings['PublisherKey']; ?>&source=wp_plugin" title="Get Short Code"><img src="<?php print $this->PluginURL; ?>images/shortcode.png" alt="" /></a>
-									<a class="strong" target="_blank" href="http://list.ly/<?php print $List['list_id']; ?>?source=wp_plugin" title="Go to List on List.ly"><?php print $List['title']; ?></a>
-								</p>
-							<?php endforeach; ?>
-
-						<?php
-
-						}
-						else
-						{
-							print "<div class='ui-state ui-state-error ui-corner-all'><p>{$ResponseJson['message']}</p></div>";
-						}
-					}
-*/
-				?>
-
-				</div>
+				<div id="ListlyAdminYourList"></div>
 
 			<?php
 
