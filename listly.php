@@ -475,7 +475,7 @@ if (!class_exists('Listly'))
 
 		function DebugConsole($Message = '', $Array = false, $ListId = '')
 		{
-			if (isset($_GET['listly_debug']) && $Message)
+			if (isset($_GET['ListlyDebug']) && $Message)
 			{
 				if ($Array)
 				{
