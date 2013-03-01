@@ -104,11 +104,11 @@ if (!class_exists('Listly'))
 						delete_transient(str_ireplace('_transient_', '', $Transient));
 					}
 
-					print '<!-- Listly: Cached data deleted. -->';
+					print 'Listly: Cached data deleted.';
 				}
 				else
 				{
-					print '<!-- Listly: No cached data found. -->';
+					print 'Listly: No cached data found.';
 				}
 			}
 		}
