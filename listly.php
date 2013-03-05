@@ -425,7 +425,12 @@ if (!class_exists('Listly'))
 
 				if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 				{
-					set_transient("Listly-$ListId-$Layout", $Response, 86400);
+					$ResponseJson = json_decode($Response['body'], true);
+
+					if ($ResponseJson['status'] == 'ok')
+					{
+						set_transient("Listly-$ListId-$Layout", $Response, 86400);
+					}
 				}
 			}
 
@@ -446,8 +451,13 @@ if (!class_exists('Listly'))
 
 					if (!is_wp_error($Response) && isset($Response['body']) && $Response['body'] != '')
 					{
-						delete_transient("Listly-$ListId-$Layout");
-						set_transient("Listly-$ListId-$Layout", $Response, 86400);
+						$ResponseJson = json_decode($Response['body'], true);
+
+						if ($ResponseJson['status'] == 'ok')
+						{
+							delete_transient("Listly-$ListId-$Layout");
+							set_transient("Listly-$ListId-$Layout", $Response, 86400);
+						}
 					}
 				}
 
