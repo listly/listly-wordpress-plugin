@@ -26,12 +26,15 @@ if (!class_exists('Listly'))
 			//$this->SiteURL = 'http://api.list.ly/v1/';
 			$this->SiteURL = 'http://listly-staging.herokuapp.com/v2/';
 
-			$this->SettingsDefaults = array(
+			$this->SettingsDefaults = array
+			(
 				'PublisherKey' => '',
 				'Layout' => 'full',
+				'APIStylesheet' => '',
 			);
 
-			$this->PostDefaults = array(
+			$this->PostDefaults = array
+			(
 				'method' => 'POST',
 				'timeout' => 5,
 				'redirection' => 5,
@@ -49,8 +52,10 @@ if (!class_exists('Listly'))
 			add_filter('plugin_action_links_'.plugin_basename($this->PluginFile), array($this, 'ActionLinks'));
 			add_action('init', array($this, 'Init'));
 			add_action('admin_menu', array($this, 'AdminMenu'));
+			add_action('admin_print_scripts', array($this, 'AdminPrintScripts'));
+			add_action('admin_print_styles', array($this, 'AdminPrintStyles'));
 			add_filter('contextual_help', array($this, 'ContextualHelp'), 10, 3);
-			add_action('wp_head', array($this, 'WPHead'));
+			add_action('wp_enqueue_scripts', array($this, 'WPEnqueueScripts'));
 			add_action('wp_ajax_ListlyAJAXPublisherAuth', array($this, 'ListlyAJAXPublisherAuth'));
 			add_shortcode('listly', array($this, 'ShortCode'));
 
@@ -114,8 +119,13 @@ if (!class_exists('Listly'))
 		}
 
 
-		function WPHead()
+		function WPEnqueueScripts()
 		{
+			if ($this->Settings['APIStylesheet'])
+			{
+				wp_enqueue_style('listly-list', $this->Settings['APIStylesheet'], false, $this->Version, 'screen');
+			}
+
 			wp_enqueue_script('jquery');
 		}
 
@@ -146,9 +156,6 @@ if (!class_exists('Listly'))
 			global $ListlyPageSettings;
 
 			$ListlyPageSettings = add_submenu_page('options-general.php', 'Listly &rsaquo; Settings', 'Listly', 'manage_options', $this->PluginFile, array($this, 'Admin'));
-
-			add_action("admin_print_scripts", array($this, 'AdminPrintScripts'));
-			add_action("admin_print_styles", array($this, 'AdminPrintStyles'));
 
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'page', 'side', 'default');
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'post', 'side', 'core');
@@ -184,11 +191,11 @@ if (!class_exists('Listly'))
 							$Value = trim($Value);
 						}
 
-						$Settings[$Key] = $Value;
+						$this->Settings[$Key] = $Value;
 					}
 				}
 
-				if (update_option($this->SettingsName, $Settings))
+				if (update_option($this->SettingsName, $this->Settings))
 				{
 					print '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
 				}
@@ -212,8 +219,6 @@ if (!class_exists('Listly'))
 					print '<div class="error"><p><strong>No cached data found.</strong></p></div>';
 				}
 			}
-
-			$Settings = get_option($this->SettingsName);
 
 		?>
 
@@ -242,7 +247,7 @@ if (!class_exists('Listly'))
 								<br /> <a target="_blank" href="http://list.ly/publishers/landing">Request Publisher Key</a>
 							</th>
 							<td>
-								<input name="PublisherKey" type="text" value="<?php print $Settings['PublisherKey']; ?>" class="large-text" />
+								<input name="PublisherKey" type="text" value="<?php print $this->Settings['PublisherKey']; ?>" class="large-text" />
 								<a id="ListlyAdminAuthStatus" href="#">Check Key Status</a> : <span></span>
 							</td>
 						</tr>
@@ -257,9 +262,9 @@ if (!class_exists('Listly'))
 							<th scope="row">Layout</th>
 							<td>
 								<select name="Layout">
-									<option value="full" <?php $this->CheckSelected($Settings['Layout'], 'full'); ?>>Full</option>
-									<option value="short" <?php $this->CheckSelected($Settings['Layout'], 'short'); ?>>Short</option>
-									<option value="gallery" <?php $this->CheckSelected($Settings['Layout'], 'short'); ?>>Gallery</option>
+									<option value="full" <?php $this->CheckSelected($this->Settings['Layout'], 'full'); ?>>Full</option>
+									<option value="short" <?php $this->CheckSelected($this->Settings['Layout'], 'short'); ?>>Short</option>
+									<option value="gallery" <?php $this->CheckSelected($this->Settings['Layout'], 'gallery'); ?>>Gallery</option>
 								</select>
 							</td>
 						</tr>
@@ -470,7 +475,14 @@ if (!class_exists('Listly'))
 				{
 					global $ListlyListStyle;
 					$ListlyListStyle = $ResponseJson['styles'][0];
-					add_action('wp_footer', array($this, 'WPFooterShortCode'), 100);
+
+					if (!$this->Settings['APIStylesheet'] || $ListlyListStyle != $this->Settings['APIStylesheet'])
+					{
+						$this->Settings['APIStylesheet'] = $ListlyListStyle;
+						update_option($this->SettingsName, $this->Settings);
+
+						add_action('wp_footer', array($this, 'WPFooterShortCode'), 100);
+					}
 
 					return $ResponseJson['list-dom'];
 				}
