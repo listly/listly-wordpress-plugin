@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.3
+	Version:     1.4
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/
 */
@@ -15,7 +15,7 @@ if (!class_exists('Listly'))
 	{
 		function __construct()
 		{
-			$this->Version = 1.3;
+			$this->Version = 1.4;
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
@@ -127,14 +127,6 @@ if (!class_exists('Listly'))
 			}
 
 			wp_enqueue_script('jquery');
-		}
-
-
-		function WPFooterShortCode()
-		{
-			global $ListlyListStyle;
-
-			print '<script type="text/javascript"> jQuery(document).ready(function ($) { if (!$("#listly-list-style").length) { $("head").append(\'<link id="listly-list-style" rel="stylesheet" href="'.$ListlyListStyle.'" type="text/css" />\'); } }); </script>';
 		}
 
 
@@ -473,15 +465,10 @@ if (!class_exists('Listly'))
 
 				if ($ResponseJson['status'] == 'ok')
 				{
-					global $ListlyListStyle;
-					$ListlyListStyle = $ResponseJson['styles'][0];
-
-					if (!$this->Settings['APIStylesheet'] || $ListlyListStyle != $this->Settings['APIStylesheet'])
+					if (!$this->Settings['APIStylesheet'] || $this->Settings['APIStylesheet'] != $ResponseJson['styles'][0])
 					{
-						$this->Settings['APIStylesheet'] = $ListlyListStyle;
+						$this->Settings['APIStylesheet'] = $ResponseJson['styles'][0];
 						update_option($this->SettingsName, $this->Settings);
-
-						add_action('wp_footer', array($this, 'WPFooterShortCode'), 100);
 					}
 
 					return $ResponseJson['list-dom'];
