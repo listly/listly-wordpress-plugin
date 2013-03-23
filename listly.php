@@ -433,7 +433,7 @@ if (!class_exists('Listly'))
 
 			if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
 			{
-				return "<!-- Listly error! --><p><a href=\"http://list.ly/$ListId\">View List on List.ly</a></p>";
+				return "<p><a href=\"http://list.ly/$ListId\">View this list on Listly</a></p>";
 			}
 			else
 			{
@@ -476,7 +476,7 @@ if (!class_exists('Listly'))
 				else
 				{
 					$this->DebugConsole('API Error -> '.$ResponseJson['message'], false, $ListId);
-					return "<!-- Listly error! --><p><a href=\"http://list.ly/$ListId\">View List on List.ly</a></p>";
+					return "<p><a href=\"http://list.ly/$ListId\">View this list on Listly</a></p>";
 				}
 			}
 		}
