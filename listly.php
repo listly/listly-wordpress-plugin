@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.4
+	Version:     1.6
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/
 */
@@ -15,7 +15,7 @@ if (!class_exists('Listly'))
 	{
 		function __construct()
 		{
-			$this->Version = 1.4;
+			$this->Version = 1.6;
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
@@ -23,8 +23,7 @@ if (!class_exists('Listly'))
 			$this->SettingsURL = 'options-general.php?page='.dirname(plugin_basename($this->PluginFile)).'/'.basename($this->PluginFile);
 			$this->SettingsName = 'Listly';
 			$this->Settings = get_option($this->SettingsName);
-			$this->SiteURL = 'http://api.list.ly/v2/';
-			//$this->SiteURL = 'http://listly-staging.herokuapp.com/v2/';
+			$this->SiteURL = 'http://api.list.ly/v2/'; // http://listly-staging.herokuapp.com/v2/
 
 			$this->SettingsDefaults = array
 			(
@@ -41,9 +40,9 @@ if (!class_exists('Listly'))
 				'httpversion' => '1.0',
 				'blocking' => true,
 				'decompress' => true,
-				'headers' => array('Content-Type' => 'application/json', 'Accept-Encoding' => 'gzip, deflate'),
+				'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Accept-Encoding' => 'gzip, deflate'),
 				'body' => array(),
-				'cookies' => array()
+				'cookies' => array(),
 			);
 
 
@@ -320,7 +319,7 @@ if (!class_exists('Listly'))
 				}
 				else
 				{
-					$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('key' => $_POST['Key']))));
+					$PostParms = array_merge($this->PostDefaults, array('body' => http_build_query(array('key' => $_POST['Key']))));
 					$Response = wp_remote_post($this->SiteURL.'publisher/auth.json', $PostParms);
 
 					if (is_wp_error($Response) || !isset($Response['body']) || $Response['body'] == '')
@@ -357,7 +356,7 @@ if (!class_exists('Listly'))
 			{
 				$UserURL = '#';
 
-				$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('key' => $this->Settings['PublisherKey']))));
+				$PostParms = array_merge($this->PostDefaults, array('body' => http_build_query(array('key' => $this->Settings['PublisherKey']))));
 
 				if (false === ($Response = get_transient('Listly-Auth')))
 				{
@@ -405,12 +404,13 @@ if (!class_exists('Listly'))
 
 			$ListId = $Attributes['id'];
 			$Layout = (isset($Attributes['layout']) && $Attributes['layout']) ? $Attributes['layout'] : $this->Settings['Layout'];
+			$Title = (isset($Attributes['title']) && $Attributes['title']) ? sanitize_key('-'.$Attributes['title']) : '';
+			$TransientId = "Listly-$ListId$Title-$Layout";
 
 			if (empty($ListId))
 			{
 				return 'Listly: Required parameter List ID is missing.';
 			}
-
 
 			if (isset($_GET['ListlyDebug']))
 			{
@@ -427,23 +427,24 @@ if (!class_exists('Listly'))
 					}
 				}
 
-				$PostParms = array_merge($this->PostDefaults, array('body' => json_encode($PluginsActive)));
+				$PostParms = array_merge($this->PostDefaults, array('body' => http_build_query($PluginsActive)));
 
 				wp_remote_post($this->SiteURL.'wpdebug.json', $PostParms);
 			}
 
+			$this->DebugConsole("Listly -> $this->Version", false, $ListId);
 			$this->DebugConsole("WP -> $wp_version", false, $ListId);
 			$this->DebugConsole('PHP -> '.phpversion(), false, $ListId);
 
 
-			$PostParms = array_merge($this->PostDefaults, array('body' => json_encode(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ))));
+			$PostParms = array_merge($this->PostDefaults, array('body' => http_build_query(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ))));
 
-			if (false === ($Response = get_transient("Listly-$ListId-$Layout")))
+			if (false === ($Response = get_transient($TransientId)))
 			{
 				$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
-				$this->DebugConsole('Create Cache - API Parameters -> ', false, $ListId);
-				$this->DebugConsole(json_encode($PostParms), true);
+				//$this->DebugConsole('Create Cache - API Parameters -> ', false, $ListId);
+				//$this->DebugConsole(json_encode($PostParms), true); // Exposes Publisher Key
 				$this->DebugConsole('Create Cache - API Response -> ', false, $ListId);
 				$this->DebugConsole(json_encode($Response), true);
 
@@ -453,7 +454,7 @@ if (!class_exists('Listly'))
 
 					if ($ResponseJson['status'] == 'ok')
 					{
-						set_transient("Listly-$ListId-$Layout", $Response, 86400);
+						set_transient($TransientId, $Response, 86400);
 					}
 				}
 			}
@@ -464,12 +465,12 @@ if (!class_exists('Listly'))
 			}
 			else
 			{
-				if (false !== ($Timeout = get_option("_transient_timeout_Listly-$ListId-$Layout")) && $Timeout < time() + 82800)
+				if (false !== ($Timeout = get_option("_transient_timeout_$TransientId")) && $Timeout < time() + 82800)
 				{
 					$Response = wp_remote_post($this->SiteURL.'list/embed.json', $PostParms);
 
-					$this->DebugConsole('Update Cache - API Parameters -> ', false, $ListId);
-					$this->DebugConsole(json_encode($PostParms), true);
+					//$this->DebugConsole('Update Cache - API Parameters -> ', false, $ListId);
+					//$this->DebugConsole(json_encode($PostParms), true); // Exposes Publisher Key
 					$this->DebugConsole('Update Cache - API Response -> ', false, $ListId);
 					$this->DebugConsole(json_encode($Response), true);
 
@@ -479,8 +480,8 @@ if (!class_exists('Listly'))
 
 						if ($ResponseJson['status'] == 'ok')
 						{
-							delete_transient("Listly-$ListId-$Layout");
-							set_transient("Listly-$ListId-$Layout", $Response, 86400);
+							delete_transient($TransientId);
+							set_transient($TransientId, $Response, 86400);
 						}
 					}
 				}
