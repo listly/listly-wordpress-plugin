@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.6.3
+	Version:     1.6.4
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/
 */
@@ -15,7 +15,7 @@ if (!class_exists('Listly'))
 	{
 		function __construct()
 		{
-			$this->Version = '1.6.3';
+			$this->Version = '1.6.4';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
@@ -23,7 +23,14 @@ if (!class_exists('Listly'))
 			$this->SettingsURL = 'options-general.php?page='.dirname(plugin_basename($this->PluginFile)).'/'.basename($this->PluginFile);
 			$this->SettingsName = 'Listly';
 			$this->Settings = get_option($this->SettingsName);
-			$this->SiteURL = 'http://list.ly/api/v2/';
+			if (is_ssl())
+			{
+				$this->SiteURL = 'https://list.ly/api/v2/';
+			}
+			else
+			{
+				$this->SiteURL = 'http://list.ly/api/v2/';
+			}
 
 			$this->SettingsDefaults = array
 			(
