@@ -40,6 +40,7 @@ You can get a publisher key from [here](http://list.ly/publishers/landing).
 
 = 1.6.4 =
 * Added support for SSL.
+* Fixed Metabox My List display after clearing search box.
 
 = 1.6.3 =
 * Fixed local cache issue.
