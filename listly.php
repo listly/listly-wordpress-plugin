@@ -20,17 +20,10 @@ if (!class_exists('Listly'))
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
 			$this->PluginURL = get_bloginfo('wpurl') . '/wp-content/plugins/' . dirname(plugin_basename($this->PluginFile)) . '/';
-			$this->SettingsURL = 'options-general.php?page='.dirname(plugin_basename($this->PluginFile)).'/'.basename($this->PluginFile);
+			$this->SettingsURL = 'options-general.php?page=Listly';
 			$this->SettingsName = 'Listly';
 			$this->Settings = get_option($this->SettingsName);
-			if (is_ssl())
-			{
-				$this->SiteURL = 'https://list.ly/api/v2/';
-			}
-			else
-			{
-				$this->SiteURL = 'http://list.ly/api/v2/';
-			}
+			$this->SiteURL = is_ssl() ? 'https://list.ly/api/v2/' : 'http://list.ly/api/v2/';
 
 			$this->SettingsDefaults = array
 			(
@@ -153,7 +146,7 @@ if (!class_exists('Listly'))
 		{
 			global $ListlyPageSettings;
 
-			$ListlyPageSettings = add_submenu_page('options-general.php', 'Listly &rsaquo; Settings', 'Listly', 'manage_options', $this->PluginFile, array($this, 'Admin'));
+			$ListlyPageSettings = add_submenu_page('options-general.php', 'Listly Settings', 'Listly', 'manage_options', 'Listly', array($this, 'Admin'));
 
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'page', 'side', 'default');
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'post', 'side', 'core');
