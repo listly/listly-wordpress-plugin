@@ -38,6 +38,9 @@ You can get a publisher key from [here](http://list.ly/publishers/landing).
 
 == Changelog ==
 
+= 1.6.5 =
+* Updating ShortCode to pass all parameter to API.
+
 = 1.6.4 =
 * Added support for SSL.
 * Fixed Metabox My List display after clearing search box.

@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.6.4
+	Version:     1.6.5
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/
 */
@@ -15,7 +15,7 @@ if (!class_exists('Listly'))
 	{
 		function __construct()
 		{
-			$this->Version = '1.6.4';
+			$this->Version = '1.6.5';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
@@ -437,7 +437,8 @@ if (!class_exists('Listly'))
 			$this->DebugConsole('PHP -> '.phpversion(), false, $ListId);
 
 
-			$PostParms = array_merge($this->PostDefaults, array('body' => http_build_query(array('list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ))));
+			$PostParmsBody = http_build_query( array_merge( $Attributes , array( 'list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ) ) );
+			$PostParms = array_merge($this->PostDefaults, array('body' => $PostParmsBody));
 
 			if (false === ($Response = get_transient($TransientId)))
 			{
