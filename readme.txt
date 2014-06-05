@@ -40,6 +40,7 @@ You can get a publisher key from [here](http://list.ly/publishers/landing).
 
 = 1.6.5 =
 * Updating ShortCode to pass all parameters to API.
+* Added support for Custom Post Types.
 
 = 1.6.4 =
 * Added support for SSL.

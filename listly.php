@@ -152,6 +152,16 @@ if (!class_exists('Listly'))
 
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'page', 'side', 'default');
 			add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), 'post', 'side', 'core');
+
+			$PostTypes = get_post_types(array('_builtin' => false));
+
+			if ($PostTypes)
+			{
+				foreach ($PostTypes as $PostType)
+				{
+					add_meta_box('ListlyMetaBox', 'Listly', array($this, 'MetaBox'), $PostType, 'side', 'default');
+				}
+			}
 		}
 
 
