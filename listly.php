@@ -97,9 +97,9 @@ if (!class_exists('Listly'))
 			{
 				global $wpdb;
 
-				$ListId = ($_GET['ListlyDeleteCache'] != '') ? $_GET['ListlyDeleteCache'].'-' : '';
+				$TransientId = ($_GET['ListlyDeleteCache'] != '') ? $_GET['ListlyDeleteCache'] : 'Listly-';
 
-				$Transients = $wpdb->get_col( $wpdb->prepare("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE %s", array("_transient_Listly-$ListId%")) );
+				$Transients = $wpdb->get_col( $wpdb->prepare("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE %s", array("_transient_$TransientId%")) );
 
 				if ($Transients)
 				{
@@ -433,7 +433,8 @@ if (!class_exists('Listly'))
 			$ListId = $Attributes['id'];
 			$Layout = (isset($Attributes['layout']) && $Attributes['layout']) ? $Attributes['layout'] : $this->Settings['Layout'];
 			$Title = (isset($Attributes['title']) && $Attributes['title']) ? sanitize_key('-'.$Attributes['title']) : '';
-			$TransientId = "Listly-$ListId$Title-$Layout";
+			//$TransientId = "Listly-$ListId$Title-$Layout";
+			$TransientId = 'Listly-'.md5(http_build_query($Attributes));
 
 			if (empty($ListId))
 			{
@@ -463,9 +464,10 @@ if (!class_exists('Listly'))
 			$this->DebugConsole("Listly -> $this->Version", false, $ListId);
 			$this->DebugConsole("WP -> $wp_version", false, $ListId);
 			$this->DebugConsole('PHP -> '.phpversion(), false, $ListId);
+			$this->DebugConsole("Transient -> $TransientId", false, $ListId);
 
 
-			$PostParmsBody = http_build_query( array_merge( $Attributes , array( 'list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$ListId") ) ) );
+			$PostParmsBody = http_build_query( array_merge( $Attributes , array( 'list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url("/?ListlyDeleteCache=$TransientId") ) ) );
 			$PostParms = array_merge($this->PostDefaults, array('body' => $PostParmsBody));
 
 			if (false === ($Response = get_transient($TransientId)))

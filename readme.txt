@@ -39,7 +39,7 @@ You can get a publisher key from [here](http://list.ly/publishers/landing).
 == Changelog ==
 
 = 1.6.5 =
-* Updating ShortCode to pass all parameter to API.
+* Updating ShortCode to pass all parameters to API.
 
 = 1.6.4 =
 * Added support for SSL.
