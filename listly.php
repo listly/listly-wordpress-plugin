@@ -114,6 +114,8 @@ if (!class_exists('Listly'))
 				{
 					print 'Listly: No cached data found.';
 				}
+
+				exit;
 			}
 		}
 
@@ -272,6 +274,32 @@ if (!class_exists('Listly'))
 								<input name="action" type="submit" value="Delete Cache" class="button-secondary" />
 							</td>
 						</tr>
+
+						<?php if (isset($_GET['debug'])) : ?>
+							<tr valign="top">
+								<th scope="row">Cached Items</th>
+								<td>
+									<?php
+										$Transients = $wpdb->get_col("SELECT DISTINCT option_name FROM $wpdb->options WHERE option_name LIKE '_transient_Listly-%'");
+
+										if ($Transients)
+										{
+											foreach ($Transients as $Transient)
+											{
+												$TransientId = str_ireplace('_transient_', '', $Transient);
+												$Timeout = date(get_option('date_format').' '.get_option('time_format'), get_option("_transient_timeout_$TransientId"));
+
+												print "<p>$TransientId ($Timeout)</p>";
+											}
+										}
+										else
+										{
+											print 'No cached data found.';
+										}
+									?>
+								</td>
+							</tr>
+						<?php endif; ?>
 
 					</table>
 
