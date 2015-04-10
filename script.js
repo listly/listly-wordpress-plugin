@@ -4,12 +4,11 @@ jQuery(document).ready(function($)
 	{
 		e.preventDefault();
 
-		var Key = $(this).prev('input').val();
 		var ElmMsg = $(this).next('span');
 
 		ElmMsg.html('Loading...');
 
-		$.post(ajaxurl, {'action': 'ListlyAJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': Key}, function(data)
+		$.post(ajaxurl, {'action': 'ListlyAJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': $('input[name="PublisherKey"]').val()}, function(data)
 		{
 			ElmMsg.html(data);
 		});

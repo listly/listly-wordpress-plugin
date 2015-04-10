@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.6.7
+	Version:     1.6.8
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -15,7 +15,7 @@ if (!class_exists('Listly'))
 	{
 		function __construct()
 		{
-			$this->Version = '1.6.7';
+			$this->Version = '1.6.8';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname($this->PluginFile) . '/';
@@ -30,6 +30,7 @@ if (!class_exists('Listly'))
 				'PublisherKey' => '',
 				'Layout' => 'full',
 				'APIStylesheet' => '',
+				'Styling' => array(),
 			);
 
 			$this->PostDefaults = array
@@ -141,6 +142,14 @@ if (!class_exists('Listly'))
 
 		function AdminMenuLoad()
 		{
+			global $wp_version;
+
+			if ( version_compare( $wp_version, '3.5', '>=' ) )
+			{
+				wp_enqueue_style( 'wp-color-picker' );
+				wp_enqueue_script( 'wp-color-picker' );
+			}
+
 			wp_enqueue_script( 'jquery' );
 			wp_enqueue_script( 'listly-script', $this->PluginURL.'script.js', false, $this->Version, false );
 			wp_localize_script( 'listly-script', 'Listly', array( 'PluginURL' => $this->PluginURL, 'SiteURL' => $this->SiteURL, 'Key' => $this->Settings['PublisherKey'], 'Nounce' => wp_create_nonce( 'ListlyNounce' ) ) );
@@ -180,7 +189,7 @@ if (!class_exists('Listly'))
 				wp_die(__('Security check failed! Settings not saved.'));
 			}
 
-			global $wpdb;
+			global $wpdb, $wp_version;
 
 			if (isset($_POST['action']) && $_POST['action'] == 'Save Settings')
 			{
@@ -243,41 +252,120 @@ if (!class_exists('Listly'))
 
 				<form method="post" action="">
 
-					<h3>Common Settings</h3>
+					<h3>General</h3>
 
 					<table class="form-table listly-table">
 
 						<tr valign="top">
 							<th scope="row">
-								Publisher Key
-								<br /> <a target="_blank" href="http://list.ly/publishers/landing">Request Publisher Key</a>
+								<a target="_blank" href="http://list.ly/publishers/landing">Publisher Key</a>
 							</th>
 							<td>
-								<input name="PublisherKey" type="text" value="<?php print $this->Settings['PublisherKey']; ?>" class="large-text" />
-								<a id="ListlyAdminAuthStatus" href="#">Check Key Status</a> : <span></span>
+								<input name="PublisherKey" type="text" value="<?php print $this->Settings['PublisherKey']; ?>" class="regular-text" />
+								<br />
+								<a id="ListlyAdminAuthStatus" href="#">Check Status</a> : <span></span>
 							</td>
 						</tr>
 
-					</table>
-
-					<h3>Default ShortCode Settings</h3>
-
-					<table class="form-table listly-table">
-
 						<tr valign="top">
-							<th scope="row">Layout</th>
+							<th scope="row">
+								List Layout
+							</th>
 							<td>
 								<select name="Layout">
 									<option value="full" <?php $this->CheckSelected($this->Settings['Layout'], 'full'); ?>>Full</option>
 									<option value="short" <?php $this->CheckSelected($this->Settings['Layout'], 'short'); ?>>Short</option>
 									<option value="gallery" <?php $this->CheckSelected($this->Settings['Layout'], 'gallery'); ?>>Gallery</option>
 								</select>
+								<br />
+								<span class="description">This is the default option for ShortCode.</span>
 							</td>
 						</tr>
 
 					</table>
 
-					<h3>Cache Settings</h3>
+					<h3>List Styling</h3>
+
+					<table class="form-table listly-table">
+
+						<tr valign="top">
+							<th scope="row">
+								Text Color
+							</th>
+							<td>
+								<input name="Styling[text_color]" type="text" value="<?php print $this->Settings['Styling']['text_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Text Font
+							</th>
+							<td>
+								<input name="Styling[text_font]" type="text" value="<?php print $this->Settings['Styling']['text_font']; ?>" class="regular-text" />
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">
+								Title Color
+							</th>
+							<td>
+								<input name="Styling[title_color]" type="text" value="<?php print $this->Settings['Styling']['title_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Title Font
+							</th>
+							<td>
+								<input name="Styling[title_font]" type="text" value="<?php print $this->Settings['Styling']['title_font']; ?>" class="regular-text" />
+							</td>
+						</tr>
+
+						<tr valign="top">
+							<th scope="row">
+								Background Color
+							</th>
+							<td>
+								<input name="Styling[background_color]" type="text" value="<?php print $this->Settings['Styling']['background_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Border Color
+							</th>
+							<td>
+								<input name="Styling[border_color]" type="text" value="<?php print $this->Settings['Styling']['border_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Link Color
+							</th>
+							<td>
+								<input name="Styling[link_color]" type="text" value="<?php print $this->Settings['Styling']['link_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Secondary Link Color
+							</th>
+							<td>
+								<input name="Styling[secondary_link_color]" type="text" value="<?php print $this->Settings['Styling']['secondary_link_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Separator Color
+							</th>
+							<td>
+								<input name="Styling[separator_color]" type="text" value="<?php print $this->Settings['Styling']['separator_color']; ?>" class="regular-text listly-color-field" />
+							</td>
+						</tr>
+
+					</table>
+
+					<h3>Caching</h3>
 
 					<table class="form-table listly-table">
 
@@ -323,6 +411,17 @@ if (!class_exists('Listly'))
 				</form>
 
 			</div>
+
+			<script type="text/javascript">
+
+				jQuery( document ).ready( function( $ )
+				{
+					<?php if ( version_compare( $wp_version, '3.5', '>=' ) ) : ?>
+						$( '.listly-color-field' ).wpColorPicker();
+					<?php endif; ?>
+				});
+
+			</script>
 
 		<?php
 
@@ -441,12 +540,36 @@ if (!class_exists('Listly'))
 
 						wp_enqueue_script( 'jquery' );
 
+						add_action( 'wp_head', array( $this, 'WPHead' ) );
+
 						break;
 					}
 				}
 			}
 
 			return $Posts;
+		}
+
+
+		function WPHead()
+		{
+			$Styling = array_filter( $this->Settings['Styling'], 'trim' );
+
+			if ( ! count( $Styling ) )
+			{
+				return;
+			}
+
+		?>
+
+			<script type="text/javascript">
+				var _lstq = _lstq || [];
+
+				_lstq.push ( [ '_theme', { <?php foreach ( $Styling as $Key => $Value ) { printf( '%s: "%s", ', $Key, $Value ); } ?> } ] );
+			</script>
+
+		<?php
+
 		}
 
 
