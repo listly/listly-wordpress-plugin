@@ -28,6 +28,7 @@
 	margin-top: 0;
 	position: relative;
 	border:1px solid #ddd;
+	min-height: 80px;
 }
 
 #ListlyAdminYourList p.ListlyAdminItem .ListlyAdminItemImage
@@ -42,10 +43,11 @@
 	width: 100%;
 	top:0;
 	background-color: rgba(25,25,25,.8);
-	padding: 5px;
+	padding: 2px 5px;
 	font-size: 11px;
 	text-decoration: none;
 	color: #eee;
+	box-sizing: border-box;
 }
 
 #ListlyAdminYourList p.ListlyAdminItem .ListlyAdminItemTitle a{
