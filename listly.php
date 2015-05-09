@@ -166,7 +166,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function AdminEnqueueScripts( $Hook )
 		{
-			if ( $Hook == 'post.php' )
+			if ( $Hook == 'post.php' || $Hook == 'post-new.php' )
 			{
 				wp_enqueue_script( 'jquery' );
 				wp_enqueue_script( 'listly-script', $this->PluginURL . 'script.js', false, $this->Version, false );
@@ -534,7 +534,7 @@ if ( ! class_exists( 'Listly' ) )
 
 			?>
 
-				<div style="text-align: right;"><a class="button" target="_blank" href="<?php print $UserURL; ?>">Make New List</a></div>
+				<div style="text-align: right;"><a class="button button-small" target="_blank" href="<?php print $UserURL; ?>">Make New List</a></div>
 
 				<p>
 					<div class="ListlyAdminListSearchWrap">
