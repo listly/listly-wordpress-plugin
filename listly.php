@@ -538,8 +538,8 @@ if ( ! class_exists( 'Listly' ) )
 
 				<p>
 					<div class="ListlyAdminListSearchWrap">
-						<input type="text" name="ListlyAdminListSearch" placeholder="Type at least 4 characters to search" autocomplete="off" style="width: 100%; margin: 0 0 5px;" />
-						<a class="ListlyAdminListSearchClear" href="#">X</a>
+						<input type="text" name="ListlyAdminListSearch" placeholder="Type 4 characters to search" autocomplete="off"/>
+						<a class="ListlyAdminListSearchClear dashicons dashicons-no" href="javascript:void(0)"></a>
 					</div>
 					<label><input type="radio" name="ListlyAdminListSearchType" value="publisher" checked="checked" /> <small>Just My Lists</small></label> &nbsp; <label><input type="radio" name="ListlyAdminListSearchType" value="all" /> <small>Search All Lists</small></label>
 				</p>
