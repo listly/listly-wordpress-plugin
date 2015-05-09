@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.6.8
+	Version:     1.7.0
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -15,7 +15,7 @@ if ( ! class_exists( 'Listly' ) )
 	{
 		function __construct()
 		{
-			$this->Version = '1.6.8';
+			$this->Version = '1.7.0';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -62,7 +62,6 @@ if ( ! class_exists( 'Listly' ) )
 				add_action( 'admin_notices', create_function( '', "print '<div class=\'error\'><p><strong>$this->PluginName:</strong> Please enter Publisher Key on <a href=\'$this->SettingsURL\'>Settings</a> page.</p></div>';" ) );
 			}
 		}
-
 
 		function Activate()
 		{
@@ -244,11 +243,27 @@ if ( ! class_exists( 'Listly' ) )
 					width: 98%;
 				}
 
+				#ListlyAdminAuthStatus {
+					display: inline-block;
+					margin-top:10px;
+				}
+
+				#ListlyAdminAuthStatus .info {
+					background: lightyellow;
+					padding: 3px 6px;
+				}
+
+				#ListlyAdminAuthStatus .error {
+					color:red;
+				}
+
 			</style>
 
 			<div class="wrap">
 
 				<h2>Listly Settings</h2>
+
+				<p>You can create a Listly account on <a href="https://list.ly">Listly Website</a>.  You also need a Publisher Key to use this plugin, which you can get from <a href="https://list.ly/publishers/landing" target="_blank">Listly Publisher Page</a>.  <br/>Support and help are available on the <a href="https://list.ly/community" target="_blank">Listly Community Site</a>.  A Pro upgrade gets you <a href="http://list.ly/upgrade">cool features</a> and lots of <i class="dashicons dashicons-heart"></i></p>
 
 				<form method="post" action="">
 
@@ -261,21 +276,24 @@ if ( ! class_exists( 'Listly' ) )
 								<a target="_blank" href="http://list.ly/publishers/landing">Publisher Key</a>
 							</th>
 							<td>
-								<input name="PublisherKey" type="text" value="<?php print $this->Settings['PublisherKey']; ?>" class="regular-text" />
-								<br />
-								<a id="ListlyAdminAuthStatus" href="#">Check Status</a> : <span></span>
+								<div>
+								  <input name="PublisherKey" type="text" value="<?php print $this->Settings['PublisherKey']; ?>" class="regular-text" />
+								  <button id="ListlyAdminAuthCheck" href="#">Check Status</button>
+								</div>
+								<span id="ListlyAdminAuthStatus"></span>
 							</td>
 						</tr>
 
 						<tr valign="top">
 							<th scope="row">
-								List Layout
+								 Default Layout For Lists
 							</th>
 							<td>
 								<select name="Layout">
-									<option value="full" <?php $this->CheckSelected( $this->Settings['Layout'], 'full' ); ?>>Full</option>
-									<option value="short" <?php $this->CheckSelected( $this->Settings['Layout'], 'short' ); ?>>Short</option>
+									<option value="full" <?php $this->CheckSelected( $this->Settings['Layout'], 'list' ); ?>>List</option>
+									<option value="short" <?php $this->CheckSelected( $this->Settings['Layout'], 'short' ); ?>>Minimal</option>
 									<option value="gallery" <?php $this->CheckSelected( $this->Settings['Layout'], 'gallery' ); ?>>Gallery</option>
+									<option value="gallery" <?php $this->CheckSelected( $this->Settings['Layout'], 'slideshow' ); ?>>Slideshow</option>
 								</select>
 								<br />
 								<span class="description">This is the default option for ShortCode.</span>
@@ -284,8 +302,8 @@ if ( ! class_exists( 'Listly' ) )
 
 					</table>
 
-					<h3>List Styling</h3>
-
+					<h3>Custom List Styles</h3>
+					<p> Custom styles will only work with premium lists. Free accounts have three premium lists. Pro accounts have unlimited.</p>
 					<table class="form-table listly-table">
 
 						<tr valign="top">
@@ -294,6 +312,7 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[text_color]" type="text" value="<?php print $this->Settings['Styling']['text_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Color for normal text</p>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -302,6 +321,7 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[text_font]" type="text" value="<?php print $this->Settings['Styling']['text_font']; ?>" class="regular-text" />
+								<p class="description">Font for normal text</p>
 							</td>
 						</tr>
 
@@ -311,6 +331,7 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[title_color]" type="text" value="<?php print $this->Settings['Styling']['title_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Color for title text (h1, h2)</p>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -319,23 +340,17 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[title_font]" type="text" value="<?php print $this->Settings['Styling']['title_font']; ?>" class="regular-text" />
+								<p class="description">Font for title text (h1, h2)</p>
 							</td>
 						</tr>
 
-						<tr valign="top">
-							<th scope="row">
-								Background Color
-							</th>
-							<td>
-								<input name="Styling[background_color]" type="text" value="<?php print $this->Settings['Styling']['background_color']; ?>" class="regular-text listly-color-field" />
-							</td>
-						</tr>
 						<tr valign="top">
 							<th scope="row">
 								Border Color
 							</th>
 							<td>
 								<input name="Styling[border_color]" type="text" value="<?php print $this->Settings['Styling']['border_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Border color for list area</p>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -344,6 +359,16 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[link_color]" type="text" value="<?php print $this->Settings['Styling']['link_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Link color for regular links in normal text</p>
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								Secondary Text Color
+							</th>
+							<td>
+								<input name="Styling[secondary_link_color]" type="text" value="<?php print $this->Settings['Styling']['secondary_link_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Color for de-emphasized (dimmed) text</p>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -352,6 +377,7 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[secondary_link_color]" type="text" value="<?php print $this->Settings['Styling']['secondary_link_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Color for de-emphasized links and actions</p>
 							</td>
 						</tr>
 						<tr valign="top">
@@ -360,6 +386,7 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<input name="Styling[separator_color]" type="text" value="<?php print $this->Settings['Styling']['separator_color']; ?>" class="regular-text listly-color-field" />
+								<p class="description">Color for separator lines within list</p>
 							</td>
 						</tr>
 
@@ -459,7 +486,7 @@ if ( ! class_exists( 'Listly' ) )
 
 						if ( $ResponseJson['status'] == 'ok' )
 						{
-							print '<span class="info">' . $ResponseJson['message'] . '</span>';
+							print '<span class="info"><i class="dashicons dashicons-yes"></i> ' . $ResponseJson['message'] . '</span>&nbsp;&nbsp;' . ($ResponseJson['subscription'] ? '<span class="info pro"><i class="dashicons dashicons-yes"></i> Pro Account</span>' : '<span class="info basic">Free Account</span>');
 						}
 						else
 						{
@@ -477,7 +504,7 @@ if ( ! class_exists( 'Listly' ) )
 		{
 			if ( $this->Settings['PublisherKey'] == '' )
 			{
-				print "<p>Please enter Publisher Key on <a href='$this->SettingsURL'>Settings</a> page.</p>";
+				print "<p>Please enter Publisher Key on <a href='$this->SettingsURL'>Settings</a> page. You can get your Publisher Key from <a target='_blank' href='http://list.ly/publishers/landing'>Listly</a>.</p>";
 			}
 			else
 			{

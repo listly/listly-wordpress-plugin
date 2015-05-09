@@ -1,19 +1,28 @@
 jQuery(document).ready(function($)
 {
-	$('#ListlyAdminAuthStatus').click(function(e)
+	$('#ListlyAdminAuthCheck').click(function(e)
 	{
 		e.preventDefault();
-
-		var ElmMsg = $(this).next('span');
-
-		ElmMsg.html('Loading...');
-
-		$.post(ajaxurl, {'action': 'ListlyAJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': $('input[name="PublisherKey"]').val()}, function(data)
-		{
-			ElmMsg.html(data);
-		});
+		ListlyAuthStatus();
 	});
 
+	function ListlyAuthStatus()
+	{
+		var PubKey = $('input[name="PublisherKey"]').val(), AuthMsg = $("#ListlyAdminAuthStatus"), CheckButton = $("#ListlyAdminAuthCheck");
+
+		AuthMsg.html('');
+		CheckButton.text("Checking...").attr("disabled", "disabled")
+
+		$.post(ajaxurl, {'action': 'ListlyAJAXPublisherAuth', 'nounce': Listly.Nounce, 'Key': PubKey}, function(data)
+		{
+			AuthMsg.html(data);
+			CheckButton.text("Check Status").removeAttr("disabled")
+		});
+	}
+
+  if ($('input[name="PublisherKey"]').val() != "") {
+		ListlyAuthStatus(); 	
+  }
 
 	$('input[name="ListlyAdminListSearch"]').bind('keyup', function(event)
 	{
