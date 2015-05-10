@@ -263,7 +263,7 @@ if ( ! class_exists( 'Listly' ) )
 
 				<h2>Listly Settings</h2>
 
-				<p>You can create a Listly account on <a href="https://list.ly">Listly Website</a>.  You also need a Publisher Key to use this plugin, which you can get from <a href="https://list.ly/publishers/landing" target="_blank">Listly Publisher Page</a>.  <br/>Support and help are available on the <a href="https://list.ly/community" target="_blank">Listly Community Site</a>.  A Pro upgrade gets you <a href="http://list.ly/upgrade">cool features</a> and lots of <i class="dashicons dashicons-heart"></i></p>
+				<p>You can create a Listly account on <a href="https://list.ly">Listly Website</a>.  You also need a Publisher Key to use this plugin, which you can get from <a href="https://list.ly/publishers/landing" target="_blank">Listly Publisher Page</a>.  <br/>Support and help are available on the <a href="https://list.ly/community" target="_blank">Listly Community Site</a>.  A Pro upgrade gets you <a href="http://list.ly/upgrade">cool features</a> and lots of <i class="dashicons dashicons-heart"></i> from all of us at Listly</p>
 
 				<form method="post" action="">
 
