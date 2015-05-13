@@ -64,18 +64,44 @@ if ( ! class_exists( 'Listly' ) )
 			}
 		}
 
-		function Activate()
+		function Activate( $NetworkWide )
 		{
-			if ( is_array( $this->Settings ) )
+			if ( is_multisite() && $NetworkWide )
 			{
-				$Settings = array_merge( $this->SettingsDefaults, $this->Settings );
-				$Settings = array_intersect_key( $Settings, $this->SettingsDefaults );
+				foreach ( get_blog_list( 0, 'all' ) as $Blog )
+				{
+					switch_to_blog( $Blog['blog_id'] );
 
-				update_option( $this->SettingsName, $Settings );
+						$SettingsCurrent = get_option( $this->SettingsName );
+
+						if ( is_array( $SettingsCurrent ) )
+						{
+							$Settings = array_merge( $this->SettingsDefaults, $SettingsCurrent );
+							$Settings = array_intersect_key( $Settings, $this->SettingsDefaults );
+
+							update_option( $this->SettingsName, $Settings );
+						}
+						else
+						{
+							add_option( $this->SettingsName, $this->SettingsDefaults );
+						}
+
+					restore_current_blog();
+				}
 			}
 			else
 			{
-				add_option( $this->SettingsName, $this->SettingsDefaults );
+				if ( is_array( $this->Settings ) )
+				{
+					$Settings = array_merge( $this->SettingsDefaults, $this->Settings );
+					$Settings = array_intersect_key( $Settings, $this->SettingsDefaults );
+
+					update_option( $this->SettingsName, $Settings );
+				}
+				else
+				{
+					add_option( $this->SettingsName, $this->SettingsDefaults );
+				}
 			}
 		}
 
