@@ -6,7 +6,7 @@ Tags: lists, listicles, list, list post, slideshow, gallery, magazine, ranking, 
 
 Requires at least: 3.5
 Tested up to: 4.2
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -123,6 +123,9 @@ More questions?  Check out our [community site](http://community.list.ly).
 
 == Changelog ==
 
+= 1.7.3 =
+* Update Sidebar Widget to show latest or random list. ShortCode now support random loading of list by entering multiple comma separated list ids.
+
 = 1.7.2 =
 * Added Sidebar Widget.
 
@@ -182,5 +185,5 @@ More questions?  Check out our [community site](http://community.list.ly).
 
 == Upgrade Notice ==
 
-= 1.7.2 =
-Fix for multisite network activate. Added Sidebar Widget. Support for custom colors and styling. New UI in editor page.
+= 1.7.3 =
+Fix for multisite network activate. Sidebar Widget and ShortCode enhancements. Support for custom colors and styling.

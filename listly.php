@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.7.2
+	Version:     1.7.3
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -15,7 +15,7 @@ if ( ! class_exists( 'Listly' ) )
 	{
 		function __construct()
 		{
-			$this->Version = '1.7.2';
+			$this->Version = '1.7.3';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -177,7 +177,7 @@ if ( ! class_exists( 'Listly' ) )
 
 			$PostTypes = get_post_types( array( '_builtin' => false ) );
 
-			if ( $PostTypes )
+			if ( count( $PostTypes ) )
 			{
 				foreach ( $PostTypes as $PostType )
 				{
@@ -662,12 +662,20 @@ if ( ! class_exists( 'Listly' ) )
 			$ListId = $Attributes['id'];
 			$Layout = ( isset( $Attributes['layout'] ) && $Attributes['layout'] ) ? $Attributes['layout'] : $this->Settings['Layout'];
 			$Title = ( isset( $Attributes['title'] ) && $Attributes['title'] ) ? sanitize_key( '-' . $Attributes['title'] ) : '';
-			$TransientId = 'Listly-' . md5( http_build_query( $Attributes ) );
 
-			if (empty( $ListId ) )
+			if ( empty( $ListId ) )
 			{
 				return 'Listly: Required parameter List ID is missing.';
 			}
+
+			if ( strpos( $ListId, ',' ) !== false )
+			{
+				$ListIds = explode( ',', $ListId );
+				$ListIds = array_unique( $ListIds );
+				$ListId = $ListIds[ array_rand( $ListIds ) ];
+			}
+
+			$TransientId = "Listly-$ListId-" . md5( http_build_query( $Attributes ) );
 
 			if ( isset( $_GET['ListlyDebug'] ) )
 			{
@@ -698,7 +706,7 @@ if ( ! class_exists( 'Listly' ) )
 			$PostParmsBody = http_build_query( array_merge( $Attributes , array( 'list' => $ListId, 'layout' => $Layout, 'key' => $this->Settings['PublisherKey'], 'user-agent' => $_SERVER['HTTP_USER_AGENT'], 'clear_wp_cache' => site_url( "/?ListlyDeleteCache=$TransientId" ) ) ) );
 			$PostParms = array_merge( $this->PostDefaults, array( 'body' => $PostParmsBody ) );
 
-			if (false === ( $Response = get_transient( $TransientId ) ) )
+			if ( false === ( $Response = get_transient( $TransientId ) ) )
 			{
 				$Response = wp_remote_post( $this->SiteURL . 'list/embed.json', $PostParms );
 
@@ -854,11 +862,111 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				print $Settings['before_title'] . $Title . $Settings['after_title'];
 			}
 
-			?>
+			if ( ! has_shortcode( $Data['text'], 'listly' ) )
+			{
+				print '<p>No Listly list found. Get cracking and make some now!</p>';
+			}
+			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' )
+			{
+				$ListIds = get_transient( 'Listly-Widget-Lists' );
+				$PostIds = get_transient( 'Listly-Widget-Items' );
 
-				<?php print do_shortcode( $Text ); ?>
+				if (  $ListIds === false || $PostIds === false )
+				{
+					$ListIds = array();
+					$PostIds = array();
+					$PostTypes = array( 'post', 'page' );
 
-			<?php
+					$PostTypesList = get_post_types( array( 'public' => true, '_builtin' => false ) );
+
+					if ( count( $PostTypesList ) )
+					{
+						foreach ( $PostTypesList as $PostType )
+						{
+							$PostTypes[] = $PostType;
+						}
+					}
+
+					$Posts = get_posts( array( 'posts_per_page' => $Data['items'], 'post_type' => $PostTypes ) );
+
+					if ( count( $Posts ) )
+					{
+						foreach ( $Posts as $Post )
+						{
+							if ( has_shortcode( $Post->post_content, 'listly' ) && preg_match_all( '/\[listly\s+(.+?)]/', $Post->post_content, $Matches ) )
+							{
+								if ( count( $Matches[1] ) )
+								{
+									foreach ( $Matches[1] as $AttributesMatch )
+									{
+										$Attributes = shortcode_parse_atts( $AttributesMatch );
+
+										if ( isset( $Attributes['id'] ) )
+										{
+											$ListIds[] = $Attributes['id'];
+											$PostIds[] = $Post->ID;
+										}
+									}
+								}
+							}
+						}
+					}
+
+					$ListIds = array_unique( $ListIds );
+					$PostIds = array_unique( $PostIds );
+
+					set_transient( 'Listly-Widget-Lists', $ListIds, 86400 );
+					set_transient( 'Listly-Widget-Items', $PostIds, 86400 );
+				}
+
+				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/', $Data['text'], $Matches ) == 1 )
+				{
+					if ( $Data['type'] == 'latest' )
+					{
+						$ListId = reset( $ListIds );
+					}
+					elseif ( $Data['type'] == 'random' )
+					{
+						$ListId = $ListIds[ array_rand( $ListIds ) ];
+					}
+
+					$ShortCode = sprintf( '[listly id="%s"', $ListId );
+
+					$Attributes = shortcode_parse_atts( $Matches[1] );
+
+					foreach ( $Attributes as $Key => $Value )
+					{
+						if ( $Key != 'id' )
+						{
+							$ShortCode .= sprintf( ' %s="%s"', $Key, $Value );
+						}
+					}
+
+					$ShortCode .= ']';
+
+					print do_shortcode( $ShortCode );
+				}
+				else
+				{
+					print do_shortcode( $Text );
+				}
+
+				if ( count( $PostIds ) && $Data['show_posts'] )
+				{
+					printf( '<p>The last %d list posts</p> <ul>', count( $PostIds ) );
+
+					foreach ( $PostIds as $PostId )
+					{
+						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
+					}
+
+					print '</ul>';
+				}
+			}
+			else
+			{
+				print do_shortcode( $Text );
+			}
 
 			print $Settings['after_widget'];
 		}
@@ -867,6 +975,9 @@ if ( ! class_exists( 'Listly_Widget' ) )
 		{
 			$Data['title'] = strip_tags( $DataUpdate['title'] );
 			$Data['text'] = current_user_can( 'unfiltered_html' ) ? $DataUpdate['text'] : stripslashes( wp_filter_post_kses( addslashes( $DataUpdate['text'] ) ) );
+			$Data['type'] = $DataUpdate['type'];
+			$Data['items'] = $DataUpdate['items'];
+			$Data['show_posts'] = $DataUpdate['show_posts'];
 
 			return $Data;
 		}
@@ -884,9 +995,54 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				<input class="widefat" id="<?php print $this->get_field_id('title'); ?>" name="<?php print $this->get_field_name( 'title' ); ?>" type="text" value="<?php print esc_attr( $Title ); ?>" />
 			</p>
 			<p>
-				<label for="<?php print $this->get_field_id( 'text' ); ?>"><?php _e( 'ShortCode:' ); ?></label>
+				<label for="<?php print $this->get_field_id( 'text' ); ?>"><?php _e( 'Default List (ShortCode):' ); ?></label>
 				<textarea class="widefat" rows="3" cols="20" id="<?php print $this->get_field_id( 'text' ); ?>" name="<?php print $this->get_field_name( 'text' ); ?>"><?php print $Text; ?></textarea>
 			</p>
+
+
+			<p>
+				<label for="<?php print $this->get_field_id( 'type' ); ?>"><?php _e( 'Widget Type:' ); ?></label>
+				<select name="<?php print $this->get_field_name( 'type' ); ?>" id="<?php print $this->get_field_id( 'type' ); ?>">
+					<option value="default" <?php selected( $Data['type'], 'default' ); ?>><?php _e( 'Default List' ); ?></option>
+					<option value="latest" <?php selected( $Data['type'], 'latest' ); ?>><?php _e( 'Latest List' ); ?></option>
+					<option value="random" <?php selected( $Data['type'], 'random' ); ?>><?php _e( 'Random List' ); ?></option>
+				</select>
+			</p>
+			<p class="listly-widget-items">
+				<label for="<?php print $this->get_field_id( 'items' ); ?>"><?php _e( 'How many latest items to check for list:' ); ?></label>
+				<select name="<?php print $this->get_field_name( 'items' ); ?>" id="<?php print $this->get_field_id( 'items' ); ?>">
+					<option value="10" <?php selected( $Data['items'], '10' ); ?>>10</option>
+					<option value="20" <?php selected( $Data['items'], '20' ); ?>>20</option>
+					<option value="30" <?php selected( $Data['items'], '30' ); ?>>30</option>
+					<option value="40" <?php selected( $Data['items'], '40' ); ?>>40</option>
+					<option value="50" <?php selected( $Data['items'], '50' ); ?>>50</option>
+				</select>
+			</p>
+			<p class="listly-widget-show_posts">
+				<input id="<?php print $this->get_field_id( 'show_posts' ); ?>" name="<?php print $this->get_field_name( 'show_posts' ); ?>" type="checkbox" value="1" <?php checked ( isset( $Data['show_posts'] ) ? $Data['show_posts'] : 0 ); ?> />&nbsp;
+				<label for="<?php print $this->get_field_id( 'show_posts' ); ?>"><?php _e( 'Show latest list items' ); ?></label>
+			</p>
+
+			<script>
+
+				jQuery( document ).ready( function( $ )
+				{
+					$( 'select[name="<?php print $this->get_field_name( 'type' ); ?>"]' ).change( function()
+					{
+						if ( $( this ).val() == 'default' )
+						{
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-show_posts' ).slideUp();
+						}
+						else
+						{
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-show_posts' ).slideDown();
+						}
+					});
+
+					$( 'select[name="<?php print $this->get_field_name( 'type' ); ?>"]' ).change();
+				});
+
+			</script>
 
 		<?php
 
