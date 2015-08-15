@@ -953,7 +953,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 				if ( count( $PostIds ) && $Data['show_posts'] )
 				{
-					printf( '<p>The last %d list posts</p> <ul>', count( $PostIds ) );
+					printf( '<p>The last %d list items</p> <ul>', count( $PostIds ) );
 
 					foreach ( $PostIds as $PostId )
 					{
