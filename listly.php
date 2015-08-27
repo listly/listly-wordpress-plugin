@@ -862,11 +862,18 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				print $Settings['before_title'] . $Title . $Settings['after_title'];
 			}
 
-			if ( ! has_shortcode( $Data['text'], 'listly' ) )
+			if ( $Data['type'] == 'default'  )
 			{
-				print '<p>No Listly list found. Get cracking and make some now!</p>';
+				if ( has_shortcode( $Data['text'], 'listly' ) )
+				{
+					print do_shortcode( $Text );
+				}
+				else
+				{
+					print '<p>No Listly list found. Get cracking and make some now!</p>';
+				}
 			}
-			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' )
+			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' || $Data['type'] == 'lists' )
 			{
 				$ListIds = get_transient( 'Listly-Widget-Lists' );
 				$PostIds = get_transient( 'Listly-Widget-Items' );
@@ -919,17 +926,37 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					set_transient( 'Listly-Widget-Items', $PostIds, 86400 );
 				}
 
-				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/', $Data['text'], $Matches ) == 1 )
+
+				if ( $Data['type'] == 'latest' && count( $ListIds ) )
 				{
-					if ( $Data['type'] == 'latest' )
+					$ListId = reset( $ListIds );
+
+					print do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+				}
+				elseif ( $Data['type'] == 'random' && count( $ListIds ) )
+				{
+					$ListId = $ListIds[ array_rand( $ListIds ) ];
+
+					print do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+				}
+				elseif ( $Data['type'] == 'lists' && count( $PostIds ) )
+				{
+					print '<ul>';
+
+					foreach ( $PostIds as $PostId )
 					{
-						$ListId = reset( $ListIds );
-					}
-					elseif ( $Data['type'] == 'random' )
-					{
-						$ListId = $ListIds[ array_rand( $ListIds ) ];
+						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
 					}
 
+					print '</ul>';
+				}
+				else
+				{
+					print '<p>No Listly list found. Get cracking and make some now!</p>';
+				}
+/*
+				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/', $Data['text'], $Matches ) == 1 )
+				{
 					$ShortCode = sprintf( '[listly id="%s"', $ListId );
 
 					$Attributes = shortcode_parse_atts( $Matches[1] );
@@ -946,26 +973,11 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 					print do_shortcode( $ShortCode );
 				}
-				else
-				{
-					print do_shortcode( $Text );
-				}
-
-				if ( count( $PostIds ) && $Data['show_posts'] )
-				{
-					printf( '<p>The last %d list items</p> <ul>', count( $PostIds ) );
-
-					foreach ( $PostIds as $PostId )
-					{
-						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
-					}
-
-					print '</ul>';
-				}
+*/
 			}
 			else
 			{
-				print do_shortcode( $Text );
+				print '<p>Please setup the Widget settings from Dashboard.</p>';
 			}
 
 			print $Settings['after_widget'];
@@ -977,7 +989,12 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			$Data['text'] = current_user_can( 'unfiltered_html' ) ? $DataUpdate['text'] : stripslashes( wp_filter_post_kses( addslashes( $DataUpdate['text'] ) ) );
 			$Data['type'] = $DataUpdate['type'];
 			$Data['items'] = $DataUpdate['items'];
-			$Data['show_posts'] = $DataUpdate['show_posts'];
+			$Data['settings-layout'] = $DataUpdate['settings-layout'];
+			$Data['settings-items'] = $DataUpdate['settings-items'];
+			$Data['settings-header'] = $DataUpdate['settings-header'];
+			$Data['settings-tools'] = $DataUpdate['settings-tools'];
+			$Data['settings-author'] = $DataUpdate['settings-author'];
+			$Data['settings-sharing'] = $DataUpdate['settings-sharing'];
 
 			return $Data;
 		}
@@ -992,36 +1009,62 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 			<p>
 				<label for="<?php print $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
-				<input class="widefat" id="<?php print $this->get_field_id('title'); ?>" name="<?php print $this->get_field_name( 'title' ); ?>" type="text" value="<?php print esc_attr( $Title ); ?>" />
+				<input class="regular-text" id="<?php print $this->get_field_id('title'); ?>" name="<?php print $this->get_field_name( 'title' ); ?>" type="text" value="<?php print esc_attr( $Title ); ?>" />
 			</p>
-			<p>
-				<label for="<?php print $this->get_field_id( 'text' ); ?>"><?php _e( 'Default List (ShortCode):' ); ?></label>
-				<textarea class="widefat" rows="3" cols="20" id="<?php print $this->get_field_id( 'text' ); ?>" name="<?php print $this->get_field_name( 'text' ); ?>"><?php print $Text; ?></textarea>
-			</p>
-
-
 			<p>
 				<label for="<?php print $this->get_field_id( 'type' ); ?>"><?php _e( 'Widget Type:' ); ?></label>
 				<select name="<?php print $this->get_field_name( 'type' ); ?>" id="<?php print $this->get_field_id( 'type' ); ?>">
-					<option value="default" <?php selected( $Data['type'], 'default' ); ?>><?php _e( 'Default List' ); ?></option>
+					<option value="default" <?php selected( $Data['type'], 'default' ); ?>><?php _e( 'A Single List' ); ?></option>
 					<option value="latest" <?php selected( $Data['type'], 'latest' ); ?>><?php _e( 'Latest List' ); ?></option>
 					<option value="random" <?php selected( $Data['type'], 'random' ); ?>><?php _e( 'Random List' ); ?></option>
+					<option value="lists" <?php selected( $Data['type'], 'lists' ); ?>><?php _e( 'List of Lists' ); ?></option>
 				</select>
+			</p>
+			<p class="listly-widget-text">
+				<label for="<?php print $this->get_field_id( 'text' ); ?>"><?php _e( 'ShortCode for List:' ); ?></label>
+				<textarea class="widefat" rows="3" cols="20" id="<?php print $this->get_field_id( 'text' ); ?>" name="<?php print $this->get_field_name( 'text' ); ?>"><?php print $Text; ?></textarea>
 			</p>
 			<p class="listly-widget-items">
-				<label for="<?php print $this->get_field_id( 'items' ); ?>"><?php _e( 'How many latest items to check for list:' ); ?></label>
+				<label for="<?php print $this->get_field_id( 'items' ); ?>"><?php _e( 'How many latest posts to check for Listly list:' ); ?></label>
 				<select name="<?php print $this->get_field_name( 'items' ); ?>" id="<?php print $this->get_field_id( 'items' ); ?>">
-					<option value="10" <?php selected( $Data['items'], '10' ); ?>>10</option>
-					<option value="20" <?php selected( $Data['items'], '20' ); ?>>20</option>
-					<option value="30" <?php selected( $Data['items'], '30' ); ?>>30</option>
-					<option value="40" <?php selected( $Data['items'], '40' ); ?>>40</option>
-					<option value="50" <?php selected( $Data['items'], '50' ); ?>>50</option>
+					<?php foreach ( range( 10, 50, 10 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['items'], $Item, false ), $Item ); } ?>
 				</select>
 			</p>
-			<p class="listly-widget-show_posts">
-				<input id="<?php print $this->get_field_id( 'show_posts' ); ?>" name="<?php print $this->get_field_name( 'show_posts' ); ?>" type="checkbox" value="1" <?php checked ( isset( $Data['show_posts'] ) ? $Data['show_posts'] : 0 ); ?> />&nbsp;
-				<label for="<?php print $this->get_field_id( 'show_posts' ); ?>"><?php _e( 'Show latest list items' ); ?></label>
-			</p>
+			<div class="listly-widget-settings">
+				<p><strong>Customize</strong></p>
+				<p>
+					<label for="<?php print $this->get_field_id( 'settings-layout' ); ?>"><?php _e( 'Layout:' ); ?></label>
+					<select name="<?php print $this->get_field_name( 'settings-layout' ); ?>" id="<?php print $this->get_field_id( 'settings-layout' ); ?>">
+						<option value="full" <?php selected( $Data['settings-layout'], 'full' ); ?>>List</option>
+						<option value="gallery" <?php selected( $Data['settings-layout'], 'gallery' ); ?>>Gallery</option>
+						<option value="magazine" <?php selected( $Data['settings-layout'], 'magazine' ); ?>>Magazine</option>
+						<option value="slideshow" <?php selected( $Data['settings-layout'], 'slideshow' ); ?>>Slideshow</option>
+						<option value="short" <?php selected( $Data['settings-layout'], 'short' ); ?>>Minimal</option>
+					</select>
+				</p>
+				<p>
+					<label for="<?php print $this->get_field_id( 'settings-items' ); ?>"><?php _e( 'Items per page:' ); ?></label>
+					<select name="<?php print $this->get_field_name( 'settings-items' ); ?>" id="<?php print $this->get_field_id( 'settings-items' ); ?>">
+						<?php foreach ( range( 5, 25, 5 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['settings-items'], $Item, false ), $Item ); } ?>
+					</select>
+				</p>
+				<p>
+					<input id="<?php print $this->get_field_id( 'settings-header' ); ?>" name="<?php print $this->get_field_name( 'settings-header' ); ?>" type="checkbox" value="true" <?php checked ( $Data['settings-header'], 'true' ); ?> />&nbsp;
+					<label for="<?php print $this->get_field_id( 'settings-header' ); ?>"><?php _e( 'Show Header' ); ?></label>
+				</p>
+				<p>
+					<input id="<?php print $this->get_field_id( 'settings-tools' ); ?>" name="<?php print $this->get_field_name( 'settings-tools' ); ?>" type="checkbox" value="true" <?php checked ( $Data['settings-tools'], 'true' ); ?> />&nbsp;
+					<label for="<?php print $this->get_field_id( 'settings-tools' ); ?>"><?php _e( 'Show Tools' ); ?></label>
+				</p>
+				<p>
+					<input id="<?php print $this->get_field_id( 'settings-author' ); ?>" name="<?php print $this->get_field_name( 'settings-author' ); ?>" type="checkbox" value="true" <?php checked ( $Data['settings-author'], 'true' ); ?> />&nbsp;
+					<label for="<?php print $this->get_field_id( 'settings-author' ); ?>"><?php _e( 'Show Author' ); ?></label>
+				</p>
+				<p>
+					<input id="<?php print $this->get_field_id( 'settings-sharing' ); ?>" name="<?php print $this->get_field_name( 'settings-sharing' ); ?>" type="checkbox" value="true" <?php checked ( $Data['settings-sharing'], 'true' ); ?> />&nbsp;
+					<label for="<?php print $this->get_field_id( 'settings-sharing' ); ?>"><?php _e( 'Show Sharing' ); ?></label>
+				</p>
+			</div>
 
 			<script>
 
@@ -1031,11 +1074,18 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					{
 						if ( $( this ).val() == 'default' )
 						{
-							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-show_posts' ).slideUp();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-text' ).slideDown();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings' ).slideUp();
+						}
+						else if ( $( this ).val() == 'lists' )
+						{
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items' ).slideDown();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-text, .listly-widget-settings' ).slideUp();
 						}
 						else
 						{
-							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-show_posts' ).slideDown();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings' ).slideDown();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-text' ).slideUp();
 						}
 					});
 
