@@ -55,6 +55,7 @@ if ( ! class_exists( 'Listly' ) )
 			add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'AdminEnqueueScripts' ), 10, 1 );
 			add_action( 'wp_ajax_ListlyAJAXPublisherAuth', array( $this, 'ListlyAJAXPublisherAuth' ) );
+			add_action( 'wp_insert_post', array( $this, 'WPInsertPost' ), 10, 3 );
 			add_action( 'the_posts', array( $this, 'ThePosts' ), 10, 2 );
 			add_shortcode( 'listly', array( $this, 'ShortCode' ) );
 			//wp_embed_register_handler( 'listly', '#http://(?:www\.)?list\.ly/list/(\w+).*#i', array( $this, 'Embed' ) );
@@ -600,6 +601,16 @@ if ( ! class_exists( 'Listly' ) )
 		}
 
 
+		function WPInsertPost( $PostId, $Post, $Update )
+		{
+			if ( ! $Update )
+			{
+				delete_transient( 'Listly-Widget-Lists' );
+				delete_transient( 'Listly-Widget-Posts' );
+			}
+		}
+
+
 		function ThePosts( $Posts, $WPQuery )
 		{
 			if ( ! is_admin() && count( $Posts ) )
@@ -835,7 +846,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 	{
 		public function __construct()
 		{
-			parent::__construct( 'listly-widget', __( 'Listly' ), array( 'classname' => 'widget-listly', 'description' => __( 'Listly list using ShortCode.' ) ) );
+			parent::__construct( 'listly-widget', __( 'Listly' ), array( 'classname' => 'widget-listly', 'description' => __( 'Display specific, random, latest or a list of lists from your Listly posts.' ) ) );
 		}
 
 		public function widget( $Settings, $Data )
@@ -876,7 +887,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' || $Data['type'] == 'lists' )
 			{
 				$ListIds = get_transient( 'Listly-Widget-Lists' );
-				$PostIds = get_transient( 'Listly-Widget-Items' );
+				$PostIds = get_transient( 'Listly-Widget-Posts' );
 
 				if (  $ListIds === false || $PostIds === false )
 				{
@@ -923,7 +934,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					$PostIds = array_unique( $PostIds );
 
 					set_transient( 'Listly-Widget-Lists', $ListIds, 86400 );
-					set_transient( 'Listly-Widget-Items', $PostIds, 86400 );
+					set_transient( 'Listly-Widget-Posts', $PostIds, 86400 );
 				}
 
 
@@ -948,7 +959,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
 					}
 
-					print '</ul>';
+					print '</ul> <p>Powered by <a href="http://list.ly/">Listly</a></p>';
 				}
 				else
 				{
