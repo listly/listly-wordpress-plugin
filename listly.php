@@ -15,7 +15,7 @@ if ( ! class_exists( 'Listly' ) )
 	{
 		function __construct()
 		{
-			$this->Version = '1.7.3';
+			$this->Version = '2.0';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -1025,7 +1025,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			<p>
 				<label for="<?php print $this->get_field_id( 'type' ); ?>"><?php _e( 'Widget Type:' ); ?></label>
 				<select name="<?php print $this->get_field_name( 'type' ); ?>" id="<?php print $this->get_field_id( 'type' ); ?>">
-					<option value="default" <?php selected( $Data['type'], 'default' ); ?>><?php _e( 'A Single List' ); ?></option>
+					<option value="default" <?php selected( $Data['type'], 'default' ); ?>><?php _e( 'Specific List' ); ?></option>
 					<option value="latest" <?php selected( $Data['type'], 'latest' ); ?>><?php _e( 'Latest List' ); ?></option>
 					<option value="random" <?php selected( $Data['type'], 'random' ); ?>><?php _e( 'Random List' ); ?></option>
 					<option value="lists" <?php selected( $Data['type'], 'lists' ); ?>><?php _e( 'List of Lists' ); ?></option>

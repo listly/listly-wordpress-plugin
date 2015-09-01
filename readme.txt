@@ -6,7 +6,7 @@ Tags: lists, listicles, list, list post, slideshow, gallery, magazine, ranking, 
 
 Requires at least: 3.5
 Tested up to: 4.2
-Stable tag: 1.7.3
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,8 @@ But...authoring and keeping your numbered HTML lists updated on your blog is ted
 **Features**
 
 - Create and maintain your list like a pro with rich content and paying affiliate links. Add it to your post with a short code. [ [How To Make A Listy List](https://community.list.ly/t/making-your-first-list/33) ]  
+
+- Add Sidebar widget to your site to show specific, latest or random lists and even a List of Lists. [ [How It Works](https://community.list.ly/t/wordpress-plugin-sidebar-feature/213) ]  
 
 - Your lists do not have to be in a single boring blog style. Listly comes with List, Gallery, Magazine, Slideshow, and Minimal layouts. You can use the right layout for the right content...and change it anytime. [ [Show Me](https://community.list.ly/t/choosing-a-layout-for-your-lists/39) ]  
 
@@ -120,11 +122,13 @@ More questions?  Check out our [community site](http://community.list.ly).
 6. List in slideshow layout (Premium)
 7. List in minimal layout (Premium)
 8. Customize colors and styles in Your Embed
+9. List in sidebar, using sidebar widget
+10. List of Lists sidebar widget
 
 == Changelog ==
 
-= 1.7.3 =
-* Update Sidebar Widget to show latest or random list. ShortCode now support random loading of list by entering multiple comma separated list ids.
+= 2.0 =
+* Enhanced Listly Sidebar Widget.  Sidebar widgets supports four modes to display lists posts - Random List, Latest List, Specific List, and List of Lists.
 
 = 1.7.2 =
 * Added Sidebar Widget.
@@ -185,5 +189,5 @@ More questions?  Check out our [community site](http://community.list.ly).
 
 == Upgrade Notice ==
 
-= 1.7.3 =
-Fix for multisite network activate. Sidebar Widget and ShortCode enhancements. Support for custom colors and styling.
+= 2.0 =
+Enhanced Listly Sidebar Widget with support for Specific List, Random List, Latest List, and List of Lists
