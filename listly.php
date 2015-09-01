@@ -959,7 +959,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
 					}
 
-					print '</ul> <p>Powered by <a href="http://list.ly/">Listly</a></p>';
+					print '</ul> <br/><p><small>Powered by <a href="http://list.ly/">Listly</a></small></p>';
 				}
 				else
 				{
