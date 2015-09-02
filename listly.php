@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
-	Version:     1.7.3
+	Version:     2.0
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -13,6 +13,20 @@ if ( ! class_exists( 'Listly' ) )
 {
 	class Listly
 	{
+		private static $Instance;
+
+
+		static function Instance()
+		{
+			if ( ! self::$Instance )
+			{
+				self::$Instance = new self();
+			}
+
+			return self::$Instance;
+		}
+
+
 		function __construct()
 		{
 			$this->Version = '2.0';
@@ -25,8 +39,14 @@ if ( ! class_exists( 'Listly' ) )
 			$this->Settings = get_option( $this->SettingsName );
 			$this->SiteURL = is_ssl() ? 'https://list.ly/api/v2/' : 'http://list.ly/api/v2/';
 
+			if ( self::$Instance )
+			{
+				wp_die( sprintf( '<strong>%s:</strong> Please use the <code>%s::Instance()</code> method for initialization.', $this->PluginName, __CLASS__ ) );
+			}
+
 			$this->SettingsDefaults = array
 			(
+				'Version' => 0,
 				'PublisherKey' => '',
 				'Layout' => 'full',
 				'APIStylesheet' => '',
@@ -52,6 +72,7 @@ if ( ! class_exists( 'Listly' ) )
 			add_filter( 'plugin_action_links_' . plugin_basename( $this->PluginFile ), array( $this, 'ActionLinks' ) );
 			add_action( 'init', array( $this, 'Init' ) );
 			add_action( 'widgets_init', array( $this, 'WidgetsInit' ) );
+			add_action( 'admin_init', array( $this, 'AdminInit' ) );
 			add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'AdminEnqueueScripts' ), 10, 1 );
 			add_action( 'wp_ajax_ListlyAJAXPublisherAuth', array( $this, 'ListlyAJAXPublisherAuth' ) );
@@ -66,9 +87,9 @@ if ( ! class_exists( 'Listly' ) )
 			}
 		}
 
-		function Activate( $NetworkWide )
+		function Activate( $NetworkWide = false )
 		{
-			if ( is_multisite() && $NetworkWide )
+			if ( is_multisite() && ( $NetworkWide || is_plugin_active_for_network( plugin_basename( $this->PluginFile ) ) ) )
 			{
 				foreach ( get_blog_list( 0, 'all' ) as $Blog )
 				{
@@ -80,6 +101,8 @@ if ( ! class_exists( 'Listly' ) )
 						{
 							$Settings = array_merge( $this->SettingsDefaults, $SettingsCurrent );
 							$Settings = array_intersect_key( $Settings, $this->SettingsDefaults );
+
+							$Settings['Version'] = $this->Version;
 
 							update_option( $this->SettingsName, $Settings );
 						}
@@ -97,6 +120,8 @@ if ( ! class_exists( 'Listly' ) )
 				{
 					$Settings = array_merge( $this->SettingsDefaults, $this->Settings );
 					$Settings = array_intersect_key( $Settings, $this->SettingsDefaults );
+
+					$Settings['Version'] = $this->Version;
 
 					update_option( $this->SettingsName, $Settings );
 				}
@@ -164,6 +189,17 @@ if ( ! class_exists( 'Listly' ) )
 		function WidgetsInit()
 		{
 			register_widget( 'Listly_Widget' );
+		}
+
+
+		function AdminInit()
+		{
+			if ( version_compare( $this->Settings['Version'], $this->Version, '<' ) )
+			{
+				$this->Activate();
+
+				add_action( 'admin_notices', create_function( '', "print '<div class=\'updated\'><p><strong>$this->PluginName:</strong> Plugin settings has been successfully updated!</p></div>';" ) );
+			}
 		}
 
 
@@ -285,29 +321,6 @@ if ( ! class_exists( 'Listly' ) )
 
 		?>
 
-			<style type="text/css">
-
-				input.large-text
-				{
-					width: 98%;
-				}
-
-				#ListlyAdminAuthStatus {
-					display: inline-block;
-					margin-top:10px;
-				}
-
-				#ListlyAdminAuthStatus .info {
-					background: lightyellow;
-					padding: 3px 6px;
-				}
-
-				#ListlyAdminAuthStatus .error {
-					color:red;
-				}
-
-			</style>
-
 			<div class="wrap">
 
 				<h2>Listly Settings</h2>
@@ -339,10 +352,10 @@ if ( ! class_exists( 'Listly' ) )
 							</th>
 							<td>
 								<select name="Layout">
-									<option value="full" <?php $this->CheckSelected( $this->Settings['Layout'], 'list' ); ?>>List</option>
+									<option value="full" <?php $this->CheckSelected( $this->Settings['Layout'], 'full' ); ?>>List</option>
 									<option value="short" <?php $this->CheckSelected( $this->Settings['Layout'], 'short' ); ?>>Minimal</option>
 									<option value="gallery" <?php $this->CheckSelected( $this->Settings['Layout'], 'gallery' ); ?>>Gallery</option>
-									<option value="gallery" <?php $this->CheckSelected( $this->Settings['Layout'], 'slideshow' ); ?>>Slideshow</option>
+									<option value="slideshow" <?php $this->CheckSelected( $this->Settings['Layout'], 'slideshow' ); ?>>Slideshow</option>
 								</select>
 								<br />
 								<span class="description">This is the default option for ShortCode.</span>
@@ -836,7 +849,7 @@ if ( ! class_exists( 'Listly' ) )
 		}
 	}
 
-	$Listly = new Listly();
+	Listly::Instance();
 }
 
 
