@@ -2,7 +2,7 @@
 /*
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
-	Description: Plugin to easily integrate List.ly lists to Posts and Pages. It allows publishers to add/edit lists, add items to list and embed lists using shortcode. <a href="mailto:support@list.ly">Contact Support</a>
+	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
 	Version:     2.0
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
