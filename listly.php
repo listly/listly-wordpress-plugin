@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.0
+	Version:     2.1
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.0';
+			$this->Version = '2.1';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -864,7 +864,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function widget( $Settings, $Data )
 		{
-			global $Listly;
+			$Listly = Listly::Instance();
 
 			if ( $Listly->Settings['APIStylesheet'] )
 			{
@@ -1051,7 +1051,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			<p class="listly-widget-items">
 				<label for="<?php print $this->get_field_id( 'items' ); ?>"><?php _e( 'How many latest posts to check for Listly list:' ); ?></label>
 				<select name="<?php print $this->get_field_name( 'items' ); ?>" id="<?php print $this->get_field_id( 'items' ); ?>">
-					<?php foreach ( range( 10, 50, 10 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['items'], $Item, false ), $Item ); } ?>
+					<?php foreach ( range( 20, 100, 20 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['items'], $Item, false ), $Item ); } ?>
 				</select>
 			</p>
 			<div class="listly-widget-settings">
