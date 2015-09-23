@@ -171,19 +171,27 @@ if ( ! class_exists( 'Listly' ) )
 				exit;
 			}
 
-/*
+
 			if ( is_active_widget( false, false, 'listly-widget', true ) )
 			{
-				if ( $this->Settings['APIStylesheet'] )
+				global $wp_widget_factory;
+
+				$WidgetSettings = get_option( $wp_widget_factory->widgets['Listly_Widget']->option_name );
+
+				if ( count( $WidgetSettings ) )
 				{
-					wp_enqueue_style( 'listly-style', $this->Settings['APIStylesheet'], false, $this->Version );
+					foreach ( $WidgetSettings as $Settings )
+					{
+						if ( $Settings['AJAX'] == 1 )
+						{
+							wp_enqueue_script( 'jquery' );
+
+							break;
+						}
+					}
 				}
-
-				wp_enqueue_script( 'jquery' );
-
-				add_action( 'wp_head', array( $this, 'WPHead' ) );
 			}
-*/
+
 		}
 
 
@@ -567,12 +575,20 @@ if ( ! class_exists( 'Listly' ) )
 		{
 			define( 'DONOTCACHEPAGE', true );
 
-			if ( isset( $_POST['Settings'], $_POST['Data'] ) )
+			if ( isset( $_POST['Id'], $_POST['Sidebar'] ) )
 			{
-				$Content = Listly_Widget::widget( $_POST['Settings'], $_POST['Data'] );
+				global $wp_registered_sidebars, $wp_registered_widgets;
 
-				if ( $Content )
+				if ( isset( $wp_registered_sidebars[$_POST['Sidebar']], $wp_registered_widgets[$_POST['Id']] ) )
 				{
+					$Settings = $wp_registered_sidebars[$_POST['Sidebar']];
+					$Settings['widget_id'] = $_POST['Id'];
+
+					$Data = get_option( $wp_registered_widgets[$_POST['Id']]['callback'][0]->option_name )[$wp_registered_widgets[$_POST['Id']]['params'][0]['number']];
+					$Data['AJAXCall'] = 1;
+
+					$Content = Listly_Widget::widget( $Settings, $Data );
+
 					print json_encode( array( 'Status' => 'Ok', 'Content' => stripslashes( $Content ) ) );
 				}
 				else
@@ -891,6 +907,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function widget( $Settings, $Data )
 		{
+			$Listly = Listly::Instance();
 			$Output = '';
 
 			$Title = apply_filters( 'widget_title', empty( $Data['title'] ) ? '' : $Data['title'], $Data, $this->id_base );
@@ -1022,14 +1039,13 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 			if ( $Data['AJAX'] && ! $Data['AJAXCall'] )
 			{
-				$Data['AJAXCall'] = 1;
-				$WidgetContentId = $Settings['widget_id'] . '-content';
+				$WidgetContentId = $Settings['widget_id'] . '-ajax';
 
 				print $Settings['before_widget'];
 
 			?>
 
-				<div id="<?php print $WidgetContentId; ?>"><p>Loading...</p></div>
+				<div id="<?php print $WidgetContentId; ?>"></div>
 
 				<script type="text/javascript">
 
@@ -1039,8 +1055,12 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						({
 							type: 'POST',
 							url: '<?php print admin_url( 'admin-ajax.php' ); ?>',
-							data: { 'action': 'ListlyAJAXWidget', 'Settings': <?php print json_encode( $Settings ); ?>, 'Data': <?php print json_encode( $Data ); ?> },
-							dataType: 'json'
+							data: { 'action': 'ListlyAJAXWidget', 'Id': '<?php print $Settings['widget_id']; ?>', 'Sidebar': '<?php print $Settings['id']; ?>' },
+							dataType: 'json',
+							beforeSend: function()
+							{
+								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Loading...</p>' );
+							}
 						})
 						.done( function( Data )
 						{
@@ -1048,18 +1068,14 @@ if ( ! class_exists( 'Listly_Widget' ) )
 							{
 								$( '#<?php print $WidgetContentId; ?>' ).html( Data.Content );
 							}
-							else if ( Data.Status == 'Error' )
-							{
-								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
-							}
 							else
 							{
-								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
+								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget.</p>' );
 							}
 						})
 						.fail( function( jqXHR, textStatus, errorThrown )
 						{
-							$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
+							$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget.</p>' );
 						});
 					});
 
@@ -1068,7 +1084,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			<?php
 
 				print $Settings['after_widget'];
-
 			}
 			elseif ( $Data['AJAXCall'] )
 			{
@@ -1079,8 +1094,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				print $Settings['before_widget'] . $Output . $Settings['after_widget'];
 			}
 
-
-			$Listly = Listly::Instance();
 
 			if ( $Listly->Settings['APIStylesheet'] )
 			{
