@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.1
+	Version:     2.2
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.1';
+			$this->Version = '2.2';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -76,6 +76,7 @@ if ( ! class_exists( 'Listly' ) )
 			add_action( 'admin_menu', array( $this, 'AdminMenu' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'AdminEnqueueScripts' ), 10, 1 );
 			add_action( 'wp_ajax_ListlyAJAXPublisherAuth', array( $this, 'ListlyAJAXPublisherAuth' ) );
+			add_action( 'wp_ajax_ListlyAJAXWidget', array( $this, 'ListlyAJAXWidget' ) );
 			add_action( 'wp_insert_post', array( $this, 'WPInsertPost' ), 10, 3 );
 			add_action( 'the_posts', array( $this, 'ThePosts' ), 10, 2 );
 			add_shortcode( 'listly', array( $this, 'ShortCode' ) );
@@ -198,7 +199,7 @@ if ( ! class_exists( 'Listly' ) )
 			{
 				$this->Activate();
 
-				add_action( 'admin_notices', create_function( '', "print '<div class=\'updated\'><p><strong>$this->PluginName:</strong> Plugin settings has been successfully updated!</p></div>';" ) );
+				add_action( 'admin_notices', create_function( '', "print '<div class=\'updated notice is-dismissible\'> <p><strong>$this->PluginName:</strong> Plugin settings has been successfully updated!</p> <button type=\'button\' class=\'notice-dismiss\'></button> </div>';" ) );
 			}
 		}
 
@@ -296,7 +297,7 @@ if ( ! class_exists( 'Listly' ) )
 
 				if ( update_option( $this->SettingsName, $this->Settings ) )
 				{
-					print '<div class="updated"><p><strong>Settings saved.</strong></p></div>';
+					print '<div class="updated notice is-dismissible"> <p><strong>Settings saved.</strong></p> <button type="button" class="notice-dismiss"></button> </div>';
 				}
 			}
 
@@ -311,11 +312,11 @@ if ( ! class_exists( 'Listly' ) )
 						delete_transient( str_ireplace( '_transient_', '', $Transient ) );
 					}
 
-					print '<div class="updated"><p><strong>All cached data deleted.</strong></p></div>';
+					print '<div class="updated notice is-dismissible"> <p><strong>All cached data deleted.</strong></p> <button type="button" class="notice-dismiss"></button> </div>';
 				}
 				else
 				{
-					print '<div class="error"><p><strong>No cached data found.</strong></p></div>';
+					print '<div class="error notice is-dismissible"> <p><strong>No cached data found.</strong></p> <button type="button" class="notice-dismiss"></button> </div>';
 				}
 			}
 
@@ -556,6 +557,32 @@ if ( ! class_exists( 'Listly' ) )
 						}
 					}
 				}
+			}
+
+			exit;
+		}
+
+
+		function ListlyAJAXWidget()
+		{
+			define( 'DONOTCACHEPAGE', true );
+
+			if ( isset( $_POST['Settings'], $_POST['Data'] ) )
+			{
+				$Content = Listly_Widget::widget( $_POST['Settings'], $_POST['Data'] );
+
+				if ( $Content )
+				{
+					print json_encode( array( 'Status' => 'Ok', 'Content' => stripslashes( $Content ) ) );
+				}
+				else
+				{
+					print json_encode( array( 'Status' => 'Error' ) );
+				}
+			}
+			else
+			{
+				print json_encode( array( 'Status' => 'Error' ) );
 			}
 
 			exit;
@@ -864,37 +891,25 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function widget( $Settings, $Data )
 		{
-			$Listly = Listly::Instance();
-
-			if ( $Listly->Settings['APIStylesheet'] )
-			{
-				wp_enqueue_style( 'listly-style', $Listly->Settings['APIStylesheet'], false, $Listly->Version );
-			}
-
-			wp_enqueue_script( 'jquery', false, false, false, true );
-
-			add_action( 'wp_footer', array( $Listly, 'WPHead' ) );
-
+			$Output = '';
 
 			$Title = apply_filters( 'widget_title', empty( $Data['title'] ) ? '' : $Data['title'], $Data, $this->id_base );
 			$Text = apply_filters( 'widget_text', empty( $Data['text'] ) ? '' : $Data['text'], $Data );
 
-			print $Settings['before_widget'];
-
 			if ( ! empty( $Title ) )
 			{
-				print $Settings['before_title'] . $Title . $Settings['after_title'];
+				$Output .= $Settings['before_title'] . $Title . $Settings['after_title'];
 			}
 
 			if ( $Data['type'] == 'default'  )
 			{
 				if ( has_shortcode( $Data['text'], 'listly' ) )
 				{
-					print do_shortcode( $Text );
+					$Output .= do_shortcode( $Text );
 				}
 				else
 				{
-					print '<p>No Listly list found. Get cracking and make some now!</p>';
+					$Output .= '<p>No Listly list found. Get cracking and make some now!</p>';
 				}
 			}
 			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' || $Data['type'] == 'lists' )
@@ -955,28 +970,28 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				{
 					$ListId = reset( $ListIds );
 
-					print do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
 				}
 				elseif ( $Data['type'] == 'random' && count( $ListIds ) )
 				{
 					$ListId = $ListIds[ array_rand( $ListIds ) ];
 
-					print do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
 				}
 				elseif ( $Data['type'] == 'lists' && count( $PostIds ) )
 				{
-					print '<ul>';
+					$Output .= '<ul>';
 
 					foreach ( $PostIds as $PostId )
 					{
-						printf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
+						$Output .= sprintf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
 					}
 
-					print '</ul> <br/><p><small>Powered by <a href="http://list.ly/">Listly</a></small></p>';
+					$Output .= '</ul> <br/><p><small>Powered by <a href="http://list.ly/">Listly</a></small></p>';
 				}
 				else
 				{
-					print '<p>No Listly list found. Get cracking and make some now!</p>';
+					$Output .= '<p>No Listly list found. Get cracking and make some now!</p>';
 				}
 /*
 				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/', $Data['text'], $Matches ) == 1 )
@@ -995,16 +1010,86 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 					$ShortCode .= ']';
 
-					print do_shortcode( $ShortCode );
+					$Output .= do_shortcode( $ShortCode );
 				}
 */
 			}
 			else
 			{
-				print '<p>Please setup the Widget settings from Dashboard.</p>';
+				$Output .= '<p>Please setup the Widget settings from Dashboard.</p>';
 			}
 
-			print $Settings['after_widget'];
+
+			if ( $Data['AJAX'] && ! $Data['AJAXCall'] )
+			{
+				$Data['AJAXCall'] = 1;
+				$WidgetContentId = $Settings['widget_id'] . '-content';
+
+				print $Settings['before_widget'];
+
+			?>
+
+				<div id="<?php print $WidgetContentId; ?>"><p>Loading...</p></div>
+
+				<script type="text/javascript">
+
+					jQuery( document ).ready( function( $ )
+					{
+						$.ajax
+						({
+							type: 'POST',
+							url: '<?php print admin_url( 'admin-ajax.php' ); ?>',
+							data: { 'action': 'ListlyAJAXWidget', 'Settings': <?php print json_encode( $Settings ); ?>, 'Data': <?php print json_encode( $Data ); ?> },
+							dataType: 'json'
+						})
+						.done( function( Data )
+						{
+							if ( Data.Status == 'Ok' )
+							{
+								$( '#<?php print $WidgetContentId; ?>' ).html( Data.Content );
+							}
+							else if ( Data.Status == 'Error' )
+							{
+								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
+							}
+							else
+							{
+								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
+							}
+						})
+						.fail( function( jqXHR, textStatus, errorThrown )
+						{
+							$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget content.</p>' );
+						});
+					});
+
+				</script>
+
+			<?php
+
+				print $Settings['after_widget'];
+
+			}
+			elseif ( $Data['AJAXCall'] )
+			{
+				return $Output;
+			}
+			else
+			{
+				print $Settings['before_widget'] . $Output . $Settings['after_widget'];
+			}
+
+
+			$Listly = Listly::Instance();
+
+			if ( $Listly->Settings['APIStylesheet'] )
+			{
+				wp_enqueue_style( 'listly-style', $Listly->Settings['APIStylesheet'], false, $Listly->Version );
+			}
+
+			wp_enqueue_script( 'jquery', false, false, false, true );
+
+			add_action( 'wp_footer', array( $Listly, 'WPHead' ) );
 		}
 
 		public function update( $DataUpdate, $Data )
@@ -1013,6 +1098,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			$Data['text'] = current_user_can( 'unfiltered_html' ) ? $DataUpdate['text'] : stripslashes( wp_filter_post_kses( addslashes( $DataUpdate['text'] ) ) );
 			$Data['type'] = $DataUpdate['type'];
 			$Data['items'] = $DataUpdate['items'];
+			$Data['AJAX'] = $DataUpdate['AJAX'];
 			$Data['settings-layout'] = $DataUpdate['settings-layout'];
 			$Data['settings-items'] = $DataUpdate['settings-items'];
 			$Data['settings-header'] = $DataUpdate['settings-header'];
@@ -1042,6 +1128,13 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					<option value="latest" <?php selected( $Data['type'], 'latest' ); ?>><?php _e( 'Latest List' ); ?></option>
 					<option value="random" <?php selected( $Data['type'], 'random' ); ?>><?php _e( 'Random List' ); ?></option>
 					<option value="lists" <?php selected( $Data['type'], 'lists' ); ?>><?php _e( 'List of Lists' ); ?></option>
+				</select>
+			</p>
+			<p>
+				<label for="<?php print $this->get_field_id( 'AJAX' ); ?>"><?php _e( 'Use AJAX:' ); ?></label>
+				<select name="<?php print $this->get_field_name( 'AJAX' ); ?>" id="<?php print $this->get_field_id( 'AJAX' ); ?>">
+					<option value="0" <?php selected( $Data['AJAX'], '0' ); ?>><?php _e( 'No' ); ?></option>
+					<option value="1" <?php selected( $Data['AJAX'], '1' ); ?>><?php _e( 'Yes' ); ?></option>
 				</select>
 			</p>
 			<p class="listly-widget-text">
@@ -1090,7 +1183,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				</p>
 			</div>
 
-			<script>
+			<script type="text/javascript">
 
 				jQuery( document ).ready( function( $ )
 				{

@@ -6,7 +6,7 @@ Tags: lists, listicles, list, list post, slideshow, gallery, magazine, ranking, 
 
 Requires at least: 3.5
 Tested up to: 4.3
-Stable tag: 2.1
+Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -127,6 +127,9 @@ More questions?  Check out our [community site](http://community.list.ly).
 
 == Changelog ==
 
+= 2.2 =
+* Added AJAX option for Sidebar Widget.
+
 = 2.1 =
 * Increased number of posts to fetch to 100 for Widget.
 * Bug fixing.
@@ -193,5 +196,5 @@ More questions?  Check out our [community site](http://community.list.ly).
 
 == Upgrade Notice ==
 
-= 2.1 =
-Enhanced Listly Sidebar Widget with support for Specific List, Random List, Latest List, and List of Lists
+= 2.2 =
+Enhanced Listly Sidebar Widget with support for AJAX, Specific List, Random List, Latest List, and List of Lists
