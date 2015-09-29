@@ -128,7 +128,7 @@ More questions?  Check out our [community site](http://community.list.ly).
 == Changelog ==
 
 = 2.2 =
-* Added AJAX option for Sidebar Widget.
+* Added dynamic update of Sidebar Widget for cache enabled sites.
 
 = 2.1 =
 * Increased number of posts to fetch to 100 for Widget.
@@ -197,4 +197,4 @@ More questions?  Check out our [community site](http://community.list.ly).
 == Upgrade Notice ==
 
 = 2.2 =
-Enhanced Listly Sidebar Widget with support for AJAX, Specific List, Random List, Latest List, and List of Lists
+Enhanced Listly Sidebar Widget with support for Specific List, Random List, Latest List, and List of Lists

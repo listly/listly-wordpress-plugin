@@ -174,22 +174,14 @@ if ( ! class_exists( 'Listly' ) )
 
 			if ( is_active_widget( false, false, 'listly-widget', true ) )
 			{
-				global $wp_widget_factory;
-
-				$WidgetSettings = get_option( $wp_widget_factory->widgets['Listly_Widget']->option_name );
-
-				if ( count( $WidgetSettings ) )
+				if ( $this->Settings['APIStylesheet'] )
 				{
-					foreach ( $WidgetSettings as $Settings )
-					{
-						if ( $Settings['AJAX'] == 1 )
-						{
-							wp_enqueue_script( 'jquery' );
-
-							break;
-						}
-					}
+					wp_enqueue_style( 'listly-style', $this->Settings['APIStylesheet'], false, $this->Version );
 				}
+
+				wp_enqueue_script( 'jquery' );
+
+				add_action( 'wp_head', array( $this, 'WPHead' ) );
 			}
 
 		}
@@ -585,7 +577,7 @@ if ( ! class_exists( 'Listly' ) )
 					$Settings['widget_id'] = $_POST['Id'];
 
 					$Data = get_option( $wp_registered_widgets[$_POST['Id']]['callback'][0]->option_name )[$wp_registered_widgets[$_POST['Id']]['params'][0]['number']];
-					$Data['AJAXCall'] = 1;
+					$Data['AJAXRequest'] = 1;
 
 					$Content = Listly_Widget::widget( $Settings, $Data );
 
@@ -907,7 +899,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function widget( $Settings, $Data )
 		{
-			$Listly = Listly::Instance();
 			$Output = '';
 
 			$Title = apply_filters( 'widget_title', empty( $Data['title'] ) ? '' : $Data['title'], $Data, $this->id_base );
@@ -1037,46 +1028,45 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			}
 
 
-			if ( $Data['AJAX'] && ! $Data['AJAXCall'] )
+			if ( $Data['AJAXRequest'] )
 			{
-				$WidgetContentId = $Settings['widget_id'] . '-ajax';
+				return $Output;
+			}
+			else
+			{
+				$WidgetContentId = $Settings['widget_id'] . '-content';
 
 				print $Settings['before_widget'];
 
 			?>
 
-				<div id="<?php print $WidgetContentId; ?>"></div>
+				<div id="<?php print $WidgetContentId; ?>" data-timestamp="<?php print time(); ?>"><?php print $Output; ?></div>
 
 				<script type="text/javascript">
 
 					jQuery( document ).ready( function( $ )
 					{
-						$.ajax
-						({
-							type: 'POST',
-							url: '<?php print admin_url( 'admin-ajax.php' ); ?>',
-							data: { 'action': 'ListlyAJAXWidget', 'Id': '<?php print $Settings['widget_id']; ?>', 'Sidebar': '<?php print $Settings['id']; ?>' },
-							dataType: 'json',
-							beforeSend: function()
-							{
-								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Loading...</p>' );
-							}
-						})
-						.done( function( Data )
+						if ( Math.floor( new Date().getTime() / 1000 ) - Number( $( '#<?php print $WidgetContentId; ?>' ).attr( 'data-timestamp' ) ) > 3600 )
 						{
-							if ( Data.Status == 'Ok' )
+							$.ajax
+							({
+								type: 'POST',
+								url: '<?php print admin_url( 'admin-ajax.php' ); ?>',
+								data: { 'action': 'ListlyAJAXWidget', 'Id': '<?php print $Settings['widget_id']; ?>', 'Sidebar': '<?php print $Settings['id']; ?>' },
+								dataType: 'json'
+							})
+							.done( function( Data )
 							{
-								$( '#<?php print $WidgetContentId; ?>' ).html( Data.Content );
-							}
-							else
-							{
-								$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget.</p>' );
-							}
-						})
-						.fail( function( jqXHR, textStatus, errorThrown )
-						{
-							$( '#<?php print $WidgetContentId; ?>' ).html( '<p>Listly: Error loading Widget.</p>' );
-						});
+								if ( Data.Status == 'Ok' )
+								{
+									$( '#<?php print $WidgetContentId; ?>' ).html( Data.Content );
+								}
+								else
+								{
+									console.log( 'Listly: Error loading Widget <?php print $WidgetContentId; ?>' );
+								}
+							});
+						}
 					});
 
 				</script>
@@ -1085,24 +1075,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 				print $Settings['after_widget'];
 			}
-			elseif ( $Data['AJAXCall'] )
-			{
-				return $Output;
-			}
-			else
-			{
-				print $Settings['before_widget'] . $Output . $Settings['after_widget'];
-			}
-
-
-			if ( $Listly->Settings['APIStylesheet'] )
-			{
-				wp_enqueue_style( 'listly-style', $Listly->Settings['APIStylesheet'], false, $Listly->Version );
-			}
-
-			wp_enqueue_script( 'jquery', false, false, false, true );
-
-			add_action( 'wp_footer', array( $Listly, 'WPHead' ) );
 		}
 
 		public function update( $DataUpdate, $Data )
@@ -1111,7 +1083,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			$Data['text'] = current_user_can( 'unfiltered_html' ) ? $DataUpdate['text'] : stripslashes( wp_filter_post_kses( addslashes( $DataUpdate['text'] ) ) );
 			$Data['type'] = $DataUpdate['type'];
 			$Data['items'] = $DataUpdate['items'];
-			$Data['AJAX'] = $DataUpdate['AJAX'];
 			$Data['settings-layout'] = $DataUpdate['settings-layout'];
 			$Data['settings-items'] = $DataUpdate['settings-items'];
 			$Data['settings-header'] = $DataUpdate['settings-header'];
@@ -1124,7 +1095,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function form( $Data )
 		{
-			$Data = wp_parse_args( (array) $Data, array( 'title' => '', 'text' => '' ) );
+			$Data = wp_parse_args( ( array ) $Data, array( 'title' => '', 'text' => '' ) );
 			$Title = strip_tags( $Data['title'] );
 			$Text = esc_textarea( $Data['text'] );
 
@@ -1141,13 +1112,6 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					<option value="latest" <?php selected( $Data['type'], 'latest' ); ?>><?php _e( 'Latest List' ); ?></option>
 					<option value="random" <?php selected( $Data['type'], 'random' ); ?>><?php _e( 'Random List' ); ?></option>
 					<option value="lists" <?php selected( $Data['type'], 'lists' ); ?>><?php _e( 'List of Lists' ); ?></option>
-				</select>
-			</p>
-			<p>
-				<label for="<?php print $this->get_field_id( 'AJAX' ); ?>"><?php _e( 'Use AJAX:' ); ?></label>
-				<select name="<?php print $this->get_field_name( 'AJAX' ); ?>" id="<?php print $this->get_field_id( 'AJAX' ); ?>">
-					<option value="0" <?php selected( $Data['AJAX'], '0' ); ?>><?php _e( 'No' ); ?></option>
-					<option value="1" <?php selected( $Data['AJAX'], '1' ); ?>><?php _e( 'Yes' ); ?></option>
 				</select>
 			</p>
 			<p class="listly-widget-text">
