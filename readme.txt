@@ -5,7 +5,7 @@ Donate link: http://list.ly/
 Tags: lists, listicles, list, list post, slideshow, gallery, magazine, ranking, playlist, blogroll, resource list, crowdsourcing, curation, journalism, plugin, community, content marketing, photo contest, contest, photo gallery, top10 social, storify, voting, responsive, mobile, YouTube, SlideShare, Spotify, Vimeo, affiliate links, product list, rate, rating, rankable, ranker
 
 Requires at least: 3.5
-Tested up to: 4.3
+Tested up to: 4.4
 Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
