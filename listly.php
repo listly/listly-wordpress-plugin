@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.2
+	Version:     2.3
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.2';
+			$this->Version = '2.3';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -576,7 +576,8 @@ if ( ! class_exists( 'Listly' ) )
 					$Settings = $wp_registered_sidebars[$_POST['Sidebar']];
 					$Settings['widget_id'] = $_POST['Id'];
 
-					$Data = get_option( $wp_registered_widgets[$_POST['Id']]['callback'][0]->option_name )[$wp_registered_widgets[$_POST['Id']]['params'][0]['number']];
+					$Data = get_option( $wp_registered_widgets[$_POST['Id']]['callback'][0]->option_name );
+					$Data = $Data[$wp_registered_widgets[$_POST['Id']]['params'][0]['number']];
 					$Data['AJAXRequest'] = 1;
 
 					$Content = Listly_Widget::widget( $Settings, $Data );
