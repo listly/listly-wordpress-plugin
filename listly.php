@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.3
+	Version:     2.4
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.3';
+			$this->Version = '2.4';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -654,7 +654,7 @@ if ( ! class_exists( 'Listly' ) )
 		{
 			if ( ! $Update )
 			{
-				delete_transient( 'Listly-Widget-Lists' );
+				delete_transient( 'Listly-Widget-Lists-Website' );
 				delete_transient( 'Listly-Widget-Posts' );
 			}
 		}
@@ -900,6 +900,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 
 		public function widget( $Settings, $Data )
 		{
+			$Listly = Listly::Instance();
 			$Output = '';
 
 			$Title = apply_filters( 'widget_title', empty( $Data['title'] ) ? '' : $Data['title'], $Data, $this->id_base );
@@ -923,55 +924,85 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			}
 			elseif ( $Data['type'] == 'latest' || $Data['type'] == 'random' || $Data['type'] == 'lists' )
 			{
-				$ListIds = get_transient( 'Listly-Widget-Lists' );
-				$PostIds = get_transient( 'Listly-Widget-Posts' );
-
-				if (  $ListIds === false || $PostIds === false )
+				if ( $Data['items-source'] == 'website' )
 				{
-					$ListIds = array();
-					$PostIds = array();
-					$PostTypes = array( 'post', 'page' );
+					$ListIds = get_transient( 'Listly-Widget-Lists-Website' );
+					$PostIds = get_transient( 'Listly-Widget-Posts' );
 
-					$PostTypesList = get_post_types( array( 'public' => true, '_builtin' => false ) );
-
-					if ( count( $PostTypesList ) )
+					if (  $ListIds === false || $PostIds === false )
 					{
-						foreach ( $PostTypesList as $PostType )
-						{
-							$PostTypes[] = $PostType;
-						}
-					}
+						$ListIds = array();
+						$PostIds = array();
+						$PostTypes = array( 'post', 'page' );
 
-					$Posts = get_posts( array( 'posts_per_page' => $Data['items'], 'post_type' => $PostTypes ) );
+						$PostTypesList = get_post_types( array( 'public' => true, '_builtin' => false ) );
 
-					if ( count( $Posts ) )
-					{
-						foreach ( $Posts as $Post )
+						if ( count( $PostTypesList ) )
 						{
-							if ( has_shortcode( $Post->post_content, 'listly' ) && preg_match_all( '/\[listly\s+(.+?)]/', $Post->post_content, $Matches ) )
+							foreach ( $PostTypesList as $PostType )
 							{
-								if ( count( $Matches[1] ) )
-								{
-									foreach ( $Matches[1] as $AttributesMatch )
-									{
-										$Attributes = shortcode_parse_atts( $AttributesMatch );
+								$PostTypes[] = $PostType;
+							}
+						}
 
-										if ( isset( $Attributes['id'] ) )
+						$Posts = get_posts( array( 'posts_per_page' => $Data['items'], 'post_type' => $PostTypes ) );
+
+						if ( count( $Posts ) )
+						{
+							foreach ( $Posts as $Post )
+							{
+								if ( has_shortcode( $Post->post_content, 'listly' ) && preg_match_all( '/\[listly\s+(.+?)]/', $Post->post_content, $Matches ) )
+								{
+									if ( count( $Matches[1] ) )
+									{
+										foreach ( $Matches[1] as $AttributesMatch )
 										{
-											$ListIds[] = $Attributes['id'];
-											$PostIds[] = $Post->ID;
+											$Attributes = shortcode_parse_atts( $AttributesMatch );
+
+											if ( isset( $Attributes['id'] ) )
+											{
+												$ListIds[] = $Attributes['id'];
+												$PostIds[] = $Post->ID;
+											}
 										}
 									}
 								}
 							}
 						}
+
+						$ListIds = array_unique( $ListIds );
+						$PostIds = array_unique( $PostIds );
+
+						set_transient( 'Listly-Widget-Lists-Website', $ListIds, 86400 );
+						set_transient( 'Listly-Widget-Posts', $PostIds, 86400 );
 					}
+				}
+				elseif ( $Data['items-source'] == 'api' )
+				{
+					$ListIds = get_transient( 'Listly-Widget-Lists-API' );
 
-					$ListIds = array_unique( $ListIds );
-					$PostIds = array_unique( $PostIds );
+					if (  $ListIds === false )
+					{
+						$ListIds = array();
+						$PostParms = array_merge( $Listly->PostDefaults, array( 'body' => http_build_query( array( 'key' => $Listly->Settings['PublisherKey'] ) ) ) );
 
-					set_transient( 'Listly-Widget-Lists', $ListIds, 86400 );
-					set_transient( 'Listly-Widget-Posts', $PostIds, 86400 );
+						$Response = wp_remote_post( $Listly->SiteURL . 'publisher/lists.json', $PostParms );
+
+						if ( ! is_wp_error( $Response ) && isset( $Response['body'] ) && $Response['body'] != '' )
+						{
+							$ResponseJson = json_decode( $Response['body'], true );
+
+							if ( $ResponseJson['status'] == 'ok' && count( $ResponseJson['lists'] ) )
+							{
+								foreach ( $ResponseJson['lists'] as $Item )
+								{
+									$ListIds[] = $Item['list_id'];
+								}
+							}
+						}
+
+						set_transient( 'Listly-Widget-Lists-API', $ListIds, 86400 );
+					}
 				}
 
 
@@ -979,13 +1010,13 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				{
 					$ListId = reset( $ListIds );
 
-					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'] ? 'true' : 'false', $Data['settings-header'] ? 'true' : 'false', $Data['settings-author'] ? 'true' : 'false', $Data['settings-sharing'] ? 'true' : 'false', $Data['settings-tools'] ? 'true' : 'false', $Data['settings-items'] ? 'true' : 'false' ) );
 				}
 				elseif ( $Data['type'] == 'random' && count( $ListIds ) )
 				{
 					$ListId = $ListIds[ array_rand( $ListIds ) ];
 
-					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'], $Data['settings-header'], $Data['settings-author'], $Data['settings-sharing'], $Data['settings-tools'], $Data['settings-items'] ) );
+					$Output .= do_shortcode( sprintf( '[listly id="%s" layout="%s" show_header="%s" show_author="%s" show_sharing="%s" show_tools="%s" per_page="%s"]', $ListId, $Data['settings-layout'] ? 'true' : 'false', $Data['settings-header'] ? 'true' : 'false', $Data['settings-author'] ? 'true' : 'false', $Data['settings-sharing'] ? 'true' : 'false', $Data['settings-tools'] ? 'true' : 'false', $Data['settings-items'] ? 'true' : 'false' ) );
 				}
 				elseif ( $Data['type'] == 'lists' && count( $PostIds ) )
 				{
@@ -1084,6 +1115,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			$Data['text'] = current_user_can( 'unfiltered_html' ) ? $DataUpdate['text'] : stripslashes( wp_filter_post_kses( addslashes( $DataUpdate['text'] ) ) );
 			$Data['type'] = $DataUpdate['type'];
 			$Data['items'] = $DataUpdate['items'];
+			$Data['items-source'] = $DataUpdate['items-source'];
 			$Data['settings-layout'] = $DataUpdate['settings-layout'];
 			$Data['settings-items'] = $DataUpdate['settings-items'];
 			$Data['settings-header'] = $DataUpdate['settings-header'];
@@ -1099,6 +1131,9 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			$Data = wp_parse_args( ( array ) $Data, array( 'title' => '', 'text' => '' ) );
 			$Title = strip_tags( $Data['title'] );
 			$Text = esc_textarea( $Data['text'] );
+
+			$WidgetListsWebsite = get_transient( 'Listly-Widget-Lists-Website' );
+			$WidgetListsAPI = get_transient( 'Listly-Widget-Lists-API' );
 
 		?>
 
@@ -1120,10 +1155,17 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				<textarea class="widefat" rows="3" cols="20" id="<?php print $this->get_field_id( 'text' ); ?>" name="<?php print $this->get_field_name( 'text' ); ?>"><?php print $Text; ?></textarea>
 			</p>
 			<p class="listly-widget-items">
-				<label for="<?php print $this->get_field_id( 'items' ); ?>"><?php _e( 'How many latest posts to check for Listly list:' ); ?></label>
+				<input id="<?php print $this->get_field_id( 'items-source' ); ?>-website" name="<?php print $this->get_field_name( 'items-source' ); ?>" type="radio" value="website" <?php checked ( $Data['items-source'], 'website' ); ?> />&nbsp;
+				<label for="<?php print $this->get_field_id( 'items-source' ); ?>-website"><?php _e( 'How many latest posts to check for Listly list:' ); ?></label>
 				<select name="<?php print $this->get_field_name( 'items' ); ?>" id="<?php print $this->get_field_id( 'items' ); ?>">
 					<?php foreach ( range( 20, 100, 20 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['items'], $Item, false ), $Item ); } ?>
 				</select>
+				<?php printf( '<small>(found %d lists)</small>', count( $WidgetListsWebsite ) ); ?>
+			</p>
+			<p class="listly-widget-items-api">
+				<input id="<?php print $this->get_field_id( 'items-source' ); ?>-api" name="<?php print $this->get_field_name( 'items-source' ); ?>" type="radio" value="api" <?php checked ( $Data['items-source'], 'api' ); ?> />&nbsp;
+				<label for="<?php print $this->get_field_id( 'items-source' ); ?>-api"><?php _e( 'All my listly lists' ); ?></label>
+				<?php printf( '<small>(found %d lists)</small>', count( $WidgetListsAPI ) ); ?>
 			</p>
 			<div class="listly-widget-settings">
 				<p><strong>Customize</strong></p>
@@ -1170,16 +1212,17 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						if ( $( this ).val() == 'default' )
 						{
 							$( this ).closest( '.widget-content' ).find( '.listly-widget-text' ).slideDown();
-							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings' ).slideUp();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings, .listly-widget-items-api' ).slideUp();
 						}
 						else if ( $( this ).val() == 'lists' )
 						{
 							$( this ).closest( '.widget-content' ).find( '.listly-widget-items' ).slideDown();
-							$( this ).closest( '.widget-content' ).find( '.listly-widget-text, .listly-widget-settings' ).slideUp();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-text, .listly-widget-settings, .listly-widget-items-api' ).slideUp();
+							$( this ).closest( '.widget-content' ).find( 'input[name="<?php print $this->get_field_name( 'items-source' ); ?>"][value="website"]' ).prop( 'checked', true );
 						}
 						else
 						{
-							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings' ).slideDown();
+							$( this ).closest( '.widget-content' ).find( '.listly-widget-items, .listly-widget-settings, .listly-widget-items-api' ).slideDown();
 							$( this ).closest( '.widget-content' ).find( '.listly-widget-text' ).slideUp();
 						}
 					});
