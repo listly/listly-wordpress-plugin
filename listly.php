@@ -1016,7 +1016,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					}
 					if ( $Data['type'] == 'random' )
 					{
-						$ListId = $ListIds[ array_rand( $ListIds ) ];
+						$ListId = array_rand( $ListIds );
 					}
 
 					$ShortCodeAttributes = '';
