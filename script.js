@@ -65,7 +65,7 @@ jQuery(document).ready(function($)
 
 						if (jQuery.isEmptyObject(data.results))
 						{
-							Container.append('<p>No lists found! <a target="_blank" href="http://list.ly?trigger=newlist">Make a list now?</a></p>');
+							Container.append('<p>No lists found! <a target="_blank" href="https://list.ly?trigger=newlist">Make a list now?</a></p>');
 						}
 						else
 						{
@@ -114,12 +114,12 @@ jQuery(document).ready(function($)
 		{
 			var item = '<p class="ListlyAdminItem"> \
 			             <img class="ListlyAdminItemImage" src="'+lists[i].image+'" alt="" /> \
-			               <a class="ListlyAdminItemEmbed" target="_blank" href="http://list.ly/preview/'+lists[i].list_id+'?key='+Listly.Key+'&source=wp_plugin" title="Customize and get short code"> \
+			               <a class="ListlyAdminItemEmbed" target="_blank" href="https://list.ly/preview/'+lists[i].list_id+'?key='+Listly.Key+'&source=wp_plugin" title="Customize and get short code"> \
 			                 <span class="dashicons dashicons-editor-code"></span> \
 			                 <span>GET SHORT CODE</span> \
 			               </a> \
 			               <span class="ListlyAdminItemTitle">' + lists[i].title + ' \
-			                 <a class="dashicons dashicons-external" target="_blank" href="http://list.ly/l/'+lists[i].list_id+'?source=wp_plugin" title="See list on List.ly"> \
+			                 <a class="dashicons dashicons-external" target="_blank" href="https://list.ly/l/'+lists[i].list_id+'?source=wp_plugin" title="See list on List.ly"> \
 			                 </a> \
 			               </span> \
 			            </p>'
@@ -159,7 +159,7 @@ jQuery(document).ready(function($)
 
 					if (jQuery.isEmptyObject(data.lists))
 					{
-						Container.append('<p>No lists found! <a target="_blank" href="http://list.ly?trigger=newlist">Make a list now?</a></p>');
+						Container.append('<p>No lists found! <a target="_blank" href="https://list.ly?trigger=newlist">Make a list now?</a></p>');
 					}
 					else
 					{

@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.5
+	Version:     2.6
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.5';
+			$this->Version = '2.6';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -37,7 +37,7 @@ if ( ! class_exists( 'Listly' ) )
 			$this->SettingsURL = 'options-general.php?page=Listly';
 			$this->SettingsName = 'Listly';
 			$this->Settings = get_option( $this->SettingsName );
-			$this->SiteURL = is_ssl() ? 'https://list.ly/api/v2/' : 'http://list.ly/api/v2/';
+			$this->SiteURL = 'https://list.ly/api/v2/';
 			$this->ShortCodeAttributes = array( 'show_list_headline', 'show_list_badges', 'show_list_stats', 'show_list_title', 'show_list_description', 'show_list_tools', 'show_item_tabs', 'show_item_filter', 'show_item_sort', 'show_item_layout', 'show_item_search', 'show_item_numbers', 'show_item_voting', 'show_item_relist', 'show_item_comments', 'show_author', 'show_sharing' );
 
 			if ( self::$Instance )
@@ -78,16 +78,19 @@ if ( ! class_exists( 'Listly' ) )
 			add_action( 'admin_enqueue_scripts', array( $this, 'AdminEnqueueScripts' ), 10, 1 );
 			add_action( 'wp_ajax_ListlyAJAXPublisherAuth', array( $this, 'ListlyAJAXPublisherAuth' ) );
 			add_action( 'wp_ajax_ListlyAJAXWidget', array( $this, 'ListlyAJAXWidget' ) );
+			add_filter( 'content_save_pre', array( $this, 'ContentSavePre' ), 10, 1 );
 			add_action( 'wp_insert_post', array( $this, 'WPInsertPost' ), 10, 3 );
 			add_action( 'the_posts', array( $this, 'ThePosts' ), 10, 2 );
 			add_shortcode( 'listly', array( $this, 'ShortCode' ) );
-			//wp_embed_register_handler( 'listly', '#http://(?:www\.)?list\.ly/list/(\w+).*#i', array( $this, 'Embed' ) );
+			//wp_embed_register_handler( 'listly', '#https?://(?:www\.)?list\.ly/list/(\w+).*#i', array( $this, 'Embed' ) );
+
 
 			if ( $this->Settings['PublisherKey'] == '' )
 			{
 				add_action( 'admin_notices', create_function( '', "print '<div class=\'error\'><p><strong>$this->PluginName:</strong> Please enter Publisher Key on <a href=\'$this->SettingsURL\'>Settings</a> page.</p></div>';" ) );
 			}
 		}
+
 
 		function Activate( $NetworkWide = false )
 		{
@@ -212,7 +215,7 @@ if ( ! class_exists( 'Listly' ) )
 			add_action( "load-$ListlyHook", array( $this, 'AdminMenuLoad' ) );
 
 			add_meta_box( 'ListlyMetaBox', 'Listly', array( $this, 'MetaBox' ), 'page', 'side', 'default' );
-			add_meta_box( 'ListlyMetaBox', 'Listly', array( $this, 'MetaBox' ), 'post', 'side', 'core' );
+			add_meta_box( 'ListlyMetaBox', 'Listly', array( $this, 'MetaBox' ), 'post', 'side', 'default' );
 
 			$PostTypes = get_post_types( array( '_builtin' => false ) );
 
@@ -247,7 +250,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function AdminContextualHelp( $Help, $ScreenId, $Screen )
 		{
-			return '<p><a href="mailto:support@list.ly">Contact Support</a></p> <p><a target="_blank" href="http://list.ly/publishers/landing">Request Publisher Key</a></p>';
+			return '<p><a href="mailto:support@list.ly">Contact Support</a></p> <p><a target="_blank" href="https://list.ly/publishers/landing">Request Publisher Key</a></p>';
 		}
 
 
@@ -327,7 +330,7 @@ if ( ! class_exists( 'Listly' ) )
 
 				<h2>Listly Settings</h2>
 
-				<p>You can create a Listly account on <a href="https://list.ly">Listly Website</a>.  You also need a Publisher Key to use this plugin, which you can get from <a href="https://list.ly/publishers/landing" target="_blank">Listly Publisher Page</a>.  <br/>Support and help are available on the <a href="https://list.ly/community" target="_blank">Listly Community Site</a>.  A Pro upgrade gets you <a href="http://list.ly/upgrade">cool features</a> and lots of <i class="dashicons dashicons-heart"></i> from all of us at Listly</p>
+				<p>You can create a Listly account on <a href="https://list.ly">Listly Website</a>.  You also need a Publisher Key to use this plugin, which you can get from <a href="https://list.ly/publishers/landing" target="_blank">Listly Publisher Page</a>.  <br/>Support and help are available on the <a href="https://list.ly/community" target="_blank">Listly Community Site</a>.  A Pro upgrade gets you <a href="https://list.ly/upgrade">cool features</a> and lots of <i class="dashicons dashicons-heart"></i> from all of us at Listly</p>
 
 				<form method="post" action="">
 
@@ -337,7 +340,7 @@ if ( ! class_exists( 'Listly' ) )
 
 						<tr valign="top">
 							<th scope="row">
-								<a target="_blank" href="http://list.ly/publishers/landing">Publisher Key</a>
+								<a target="_blank" href="https://list.ly/publishers/landing">Publisher Key</a>
 							</th>
 							<td>
 								<div>
@@ -604,7 +607,7 @@ if ( ! class_exists( 'Listly' ) )
 		{
 			if ( $this->Settings['PublisherKey'] == '' )
 			{
-				print "<p>Please enter Publisher Key on <a href='$this->SettingsURL'>Settings</a> page. You can get your Publisher Key from <a target='_blank' href='http://list.ly/publishers/landing'>Listly</a>.</p>";
+				print "<p>Please enter Publisher Key on <a href='$this->SettingsURL'>Settings</a> page. You can get your Publisher Key from <a target='_blank' href='https://list.ly/publishers/landing'>Listly</a>.</p>";
 			}
 			else
 			{
@@ -652,6 +655,14 @@ if ( ! class_exists( 'Listly' ) )
 		}
 
 
+		function ContentSavePre( $Content )
+		{
+			$Content = preg_replace_callback( '/\[listly\s+(.+?)]/i', array( $this, 'SanitizeShortCodeCallback' ), $Content );
+
+			return $Content;
+		}
+
+
 		function WPInsertPost( $PostId, $Post, $Update )
 		{
 			if ( ! $Update )
@@ -668,7 +679,8 @@ if ( ! class_exists( 'Listly' ) )
 			{
 				foreach ( $Posts as $Post )
 				{
-					if ( has_shortcode( $Post->post_content, 'listly' ) || preg_match( '#http://(?:www\.)?list\.ly/list/(\w+).*#i', $Post->post_content ) )
+					//if ( has_shortcode( $Post->post_content, 'listly' ) || preg_match( '#https?://(?:www\.)?list\.ly/list/(\w+).*#i', $Post->post_content ) )
+					if ( has_shortcode( $Post->post_content, 'listly' ) )
 					{
 						if ( $this->Settings['APIStylesheet'] )
 						{
@@ -720,6 +732,8 @@ if ( ! class_exists( 'Listly' ) )
 		function ShortCode( $Attributes, $Content = null, $Code = '' )
 		{
 			global $wp_version;
+
+			$Attributes = array_map( array( $this, 'SanitizeShortCodeParamCallback' ), $Attributes );
 
 			$ListId = $Attributes['id'];
 			$Layout = ( isset( $Attributes['layout'] ) && $Attributes['layout'] ) ? $Attributes['layout'] : $this->Settings['Layout'];
@@ -789,7 +803,7 @@ if ( ! class_exists( 'Listly' ) )
 
 			if ( is_wp_error( $Response ) || ! isset( $Response['body'] ) || $Response['body'] == '' )
 			{
-				return "<p><a href=\"http://list.ly/$ListId\">View List on List.ly</a></p>";
+				return "<p><a href=\"https://list.ly/$ListId\">View List on List.ly</a></p>";
 			}
 			else
 			{
@@ -832,19 +846,19 @@ if ( ! class_exists( 'Listly' ) )
 				else
 				{
 					$this->DebugConsole( 'API Error -> ' . $ResponseJson['message'], false, $ListId );
-					return "<p><a href=\"http://list.ly/$ListId\">View List on List.ly</a></p>";
+					return "<p><a href=\"https://list.ly/$ListId\">View List on List.ly</a></p>";
 				}
 			}
 		}
 
 
-		function Embed( $Matches, $Attributes, $URL, $AttributesRaw )
+		/*function Embed( $Matches, $Attributes, $URL, $AttributesRaw )
 		{
 
 			$Embed = sprintf( '[listly id="%s"]', esc_attr( $Matches[1] ) );
 
 			return apply_filters( 'embed_listly', $Embed, $Matches, $Attributes, $URL, $AttributesRaw );
-		}
+		}*/
 
 
 		function DebugConsole( $Message = '', $Array = false, $ListId = '' )
@@ -878,6 +892,27 @@ if ( ! class_exists( 'Listly' ) )
 						break;
 				}
 			}
+		}
+
+
+		function SanitizeShortCodeCallback( $Matches )
+		{
+			$Content = $Matches[0];
+
+			//$Content = str_replace( array( '&#8220;', '&#8221;', '&#8223;', '&#8243;' ), '"', $Content );
+			$Content = preg_replace( array( '~\xE2\x80\x9C~', '~\xE2\x80\x9D~', '~\xE2\x80\x9F~', '~\xE2\x80\xB3~' ), '"', $Content );
+
+			$Content = preg_replace( array( '~\xc2\xa0~', '/\s\s+/' ), ' ', $Content );
+
+			return $Content;
+		}
+
+
+		function SanitizeShortCodeParamCallback( $Content )
+		{
+			$Content = preg_replace( array( '~\xE2\x80\x9C~', '~\xE2\x80\x9D~', '~\xE2\x80\x9F~', '~\xE2\x80\xB3~' ), '', $Content );
+
+			return $Content;
 		}
 
 
@@ -953,7 +988,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						{
 							foreach ( $Posts as $Post )
 							{
-								if ( has_shortcode( $Post->post_content, 'listly' ) && preg_match_all( '/\[listly\s+(.+?)]/', $Post->post_content, $Matches ) )
+								if ( has_shortcode( $Post->post_content, 'listly' ) && preg_match_all( '/\[listly\s+(.+?)]/i', $Post->post_content, $Matches ) )
 								{
 									if ( count( $Matches[1] ) )
 									{
@@ -1037,7 +1072,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						$Output .= sprintf( '<li><a href="%s">%s</a></li>', get_permalink( $PostId ), get_the_title( $PostId ) );
 					}
 
-					$Output .= '</ul> <br/><p><small>Powered by <a href="http://list.ly/">Listly</a></small></p>';
+					$Output .= '</ul> <br/><p><small>Powered by <a href="https://list.ly/">Listly</a></small></p>';
 				}
 				elseif ( $Data['type'] == 'lists' && $Data['items-source'] == 'api' && count( $ListIds ) )
 				{
@@ -1048,14 +1083,14 @@ if ( ! class_exists( 'Listly_Widget' ) )
 						$Output .= sprintf( '<li><a href="%s">%s</a></li>', $ListData['URL'], $ListData['Title'] );
 					}
 
-					$Output .= '</ul> <br/><p><small>Powered by <a href="http://list.ly/">Listly</a></small></p>';
+					$Output .= '</ul> <br/><p><small>Powered by <a href="https://list.ly/">Listly</a></small></p>';
 				}
 				else
 				{
 					$Output .= '<p>No Listly list found. Get cracking and make some now!</p>';
 				}
 /*
-				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/', $Data['text'], $Matches ) == 1 )
+				if ( count( $ListIds ) && preg_match( '/\[listly\s+(.+?)]/i', $Data['text'], $Matches ) == 1 )
 				{
 					$ShortCode = sprintf( '[listly id="%s"', $ListId );
 
