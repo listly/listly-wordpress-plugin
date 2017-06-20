@@ -1038,7 +1038,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 							}
 						}
 
-						set_transient( 'Listly-Widget-Lists-API', $ListIds, 86400 );
+						set_transient( 'Listly-Widget-Lists-API', $ListIds, 1800 );
 					}
 				}
 
@@ -1222,12 +1222,12 @@ if ( ! class_exists( 'Listly_Widget' ) )
 					<select name="<?php print $this->get_field_name( 'items' ); ?>" id="<?php print $this->get_field_id( 'items' ); ?>">
 						<?php foreach ( range( 20, 100, 20 ) as $Item ) { printf( '<option value="%s" %s>%s</option>', $Item, selected( $Data['items'], $Item, false ), $Item ); } ?>
 					</select>
-					<?php printf( '<small>(found %d lists)</small>', count( $WidgetListsWebsite ) ); ?>
+					<?php printf( '<small>(found %d lists. These numbers are updated every 24 hours)</small>', count( $WidgetListsWebsite ) ); ?>
 				</p>
 				<p class="listly-widget-items">
 					<input id="<?php print $this->get_field_id( 'items-source' ); ?>-api" name="<?php print $this->get_field_name( 'items-source' ); ?>" type="radio" value="api" <?php checked ( $Data['items-source'], 'api' ); ?> />&nbsp;
 					<label for="<?php print $this->get_field_id( 'items-source' ); ?>-api"><?php _e( 'All my listly lists' ); ?></label>
-					<?php printf( '<small>(found %d lists)</small>', count( $WidgetListsAPI ) ); ?>
+					<?php printf( '<small>(found %d lists. These numbers are updated every 30 minutes)</small>', count( $WidgetListsAPI ) ); ?>
 				</p>
 				<div class="listly-widget-settings">
 					<p><strong>Customize</strong></p>
