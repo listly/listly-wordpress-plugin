@@ -3,7 +3,7 @@
 	Plugin Name: List.ly
 	Plugin URI:  http://wordpress.org/extend/plugins/listly/
 	Description: Brings the power of the Listly platform to engage your audience with list posts in gallery, slideshow, magazine, and list layouts
-	Version:     2.6
+	Version:     2.7
 	Author:      Milan Kaneria
 	Author URI:  http://brandintellect.in/?Listly
 */
@@ -29,7 +29,7 @@ if ( ! class_exists( 'Listly' ) )
 
 		function __construct()
 		{
-			$this->Version = '2.6';
+			$this->Version = '2.7';
 			$this->PluginFile = __FILE__;
 			$this->PluginName = 'Listly';
 			$this->PluginPath = dirname( $this->PluginFile ) . '/';
@@ -273,7 +273,7 @@ if ( ! class_exists( 'Listly' ) )
 				wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 			}
 
-			if ( isset( $_POST['action'] ) && ! wp_verify_nonce( $_POST['nonce'], $this->SettingsName ) )
+			if ( isset( $_POST['action'] ) && ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), $this->SettingsName ) )
 			{
 				wp_die( __( 'Security check failed! Settings not saved.' ) );
 			}
@@ -292,7 +292,7 @@ if ( ! class_exists( 'Listly' ) )
 						}
 						else
 						{
-							$Value = trim( $Value );
+							$Value = sanitize_text_field( trim( $Value ) );
 						}
 
 						$this->Settings[$Key] = $Value;
@@ -527,7 +527,7 @@ if ( ! class_exists( 'Listly' ) )
 		{
 			define( 'DONOTCACHEPAGE', true );
 
-			if ( ! wp_verify_nonce( $_POST['nounce'], 'ListlyNounce' ) )
+			if ( ! wp_verify_nonce( sanitize_text_field( $_POST['nounce'] ), 'ListlyNounce' ) )
 			{
 				print '<span class="error">Authorisation failed.</span>';
 				exit;
@@ -541,12 +541,21 @@ if ( ! class_exists( 'Listly' ) )
 				}
 				else
 				{
-					$PostParms = array_merge( $this->PostDefaults, array( 'body' => http_build_query( array( 'key' => $_POST['Key'] ) ) ) );
+					$PostParms = array_merge( $this->PostDefaults, array( 'body' => http_build_query( array( 'key' => sanitize_text_field( $_POST['Key'] ) ) ) ) );
 					$Response = wp_remote_post( $this->SiteURL . 'publisher/auth.json', $PostParms );
+					$ErrorMessage = sprintf( 'No connectivity or Listly service not available.<br>Contact <a href="mailto:support@list.ly">support@list.ly</a> with the following information:<br>WP URL: %s<br>Publisher Key: %s', site_url(), sanitize_text_field( $_POST['Key'] ) );
 
-					if ( is_wp_error( $Response ) || ! isset( $Response['body'] ) || $Response['body'] == '' )
+					if ( is_wp_error( $Response ) )
 					{
-						print '<span class="error">No connectivity or Listly service not available. Try later.</span>';
+						printf( '<span class="error">%s<br>Error: %s</span>', $ErrorMessage, $Response->get_error_message() );
+					}
+					elseif ( 200 != $Response['response']['code'] )
+					{
+						printf( '<span class="error">%s<br>Error: %s - %s</span>', $ErrorMessage, $Response['response']['code'], $Response['response']['message'] );
+					}
+					elseif ( $Response['body'] == '' )
+					{
+						printf( '<span class="error">%s<br>Error: No data returned</span>', $ErrorMessage );
 					}
 					else
 					{
@@ -579,10 +588,10 @@ if ( ! class_exists( 'Listly' ) )
 				if ( isset( $wp_registered_sidebars[$_POST['Sidebar']], $wp_registered_widgets[$_POST['Id']] ) )
 				{
 					$Settings = $wp_registered_sidebars[$_POST['Sidebar']];
-					$Settings['widget_id'] = $_POST['Id'];
+					$Settings['widget_id'] = sanitize_text_field( $_POST['Id'] );
 
-					$Data = get_option( $wp_registered_widgets[$_POST['Id']]['callback'][0]->option_name );
-					$Data = $Data[$wp_registered_widgets[$_POST['Id']]['params'][0]['number']];
+					$Data = get_option( $wp_registered_widgets[sanitize_text_field( $_POST['Id'] )]['callback'][0]->option_name );
+					$Data = $Data[$wp_registered_widgets[sanitize_text_field( $_POST['Id'] )]['params'][0]['number']];
 					$Data['AJAXRequest'] = 1;
 
 					$Content = Listly_Widget::widget( $Settings, $Data );
@@ -854,7 +863,6 @@ if ( ! class_exists( 'Listly' ) )
 
 		/*function Embed( $Matches, $Attributes, $URL, $AttributesRaw )
 		{
-
 			$Embed = sprintf( '[listly id="%s"]', esc_attr( $Matches[1] ) );
 
 			return apply_filters( 'embed_listly', $Embed, $Matches, $Attributes, $URL, $AttributesRaw );
@@ -1047,7 +1055,8 @@ if ( ! class_exists( 'Listly_Widget' ) )
 				{
 					if ( $Data['type'] == 'latest' )
 					{
-						$ListId = reset( array_keys( $ListIds ) );
+						$ListIdKeys = array_keys( $ListIds );
+						$ListId = reset( $ListIdKeys );
 					}
 					if ( $Data['type'] == 'random' )
 					{
@@ -1116,7 +1125,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 			}
 
 
-			if ( $Data['AJAXRequest'] )
+			if ( ! empty( $Data['AJAXRequest'] ) )
 			{
 				return $Output;
 			}
@@ -1188,7 +1197,7 @@ if ( ! class_exists( 'Listly_Widget' ) )
 		{
 			$Listly = Listly::Instance();
 
-			$Data = wp_parse_args( ( array ) $Data, array( 'title' => '', 'text' => '' ) );
+			$Data = wp_parse_args( ( array ) $Data, array( 'title' => '', 'text' => '', 'type' => '' ) );
 			$Title = strip_tags( $Data['title'] );
 			$Text = esc_textarea( $Data['text'] );
 
